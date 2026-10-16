@@ -285,55 +285,265 @@ export const deleteCareerPosition = async (id: string) => {
 };
 
 export const createCareerApplication = async (application: any) => {
+  const localKey = 'the_loft_local_career_applications';
+  const appId = `app-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+  const now = new Date().toISOString();
+
+  const fullName = (application.full_name || application.fullName || 'Candidate').trim();
+  const phone = (application.phone || '').trim();
+  const email = (application.email || '').trim();
+  const positionId = application.position_id || application.positionId || 'pos-nail-tech';
+  const positionTitle = application.position_title || application.positionTitle || 'General Position';
+  const age = application.age ? String(application.age).trim() : '';
+  const gender = (application.gender || '').trim();
+  const cvUrl = application.cv_url || application.cvUrl || null;
+
+  // Format meta note combining age and gender for database fields
+  const metaParts: string[] = [];
+  if (age) metaParts.push(`Age: ${age}`);
+  if (gender) metaParts.push(`Gender: ${gender}`);
+  if (application.cover_note) metaParts.push(application.cover_note);
+  const coverNote = metaParts.join(' | ');
+
+  const normalizedEntry = {
+    id: appId,
+    full_name: fullName,
+    email: email,
+    phone: phone,
+    position_id: positionId,
+    position_title: positionTitle,
+    age: age,
+    gender: gender,
+    cv_url: cvUrl,
+    cover_note: coverNote,
+    experience_years: age ? `${age} yrs (${gender || 'Not specified'})` : 'Not specified',
+    status: application.status || 'pending',
+    created_at: now
+  };
+
+  // 1. Instant local storage cache for 100% data preservation
+  try {
+    const existing = JSON.parse(localStorage.getItem(localKey) || '[]');
+    existing.unshift(normalizedEntry);
+    localStorage.setItem(localKey, JSON.stringify(existing));
+  } catch (e) {
+    console.warn('Local storage application cache notice:', e);
+  }
+
+  // 2. Insert into Supabase career_applications table using existing schema columns
+  if (checkConfig()) {
+    try {
+      const dbPayload: any = {
+        full_name: fullName,
+        phone: phone,
+        email: email || null,
+        position_id: positionId,
+        position_title: positionTitle,
+        cv_url: cvUrl,
+        status: 'pending',
+        cover_note: coverNote,
+        experience_years: normalizedEntry.experience_years,
+        created_at: now
+      };
+
+      // Try inserting with dedicated columns first
+      const fullPayload = {
+        ...dbPayload,
+        ...(age ? { age: Number(age) || null } : {}),
+        ...(gender ? { gender } : {})
+      };
+
+      let { error: insertError } = await supabase
+        .from('career_applications')
+        .insert([fullPayload]);
+
+      // If age/gender columns do not exist in Supabase yet (PGRST204), fallback to safe schema
+      if (insertError && (insertError.code === 'PGRST204' || insertError.message?.includes('column'))) {
+        const retry = await supabase
+          .from('career_applications')
+          .insert([dbPayload]);
+        insertError = retry.error;
+      }
+
+      if (insertError) {
+        console.warn('career_applications insert error:', insertError.message);
+      }
+    } catch (dbErr) {
+      console.warn('Supabase career_applications error:', dbErr);
+    }
+
+    // 3. Guaranteed backup write to contacts table
+    try {
+      await supabase.from('contacts').insert([{
+        name: fullName,
+        phone: phone,
+        email: email || 'careers@theloftbynm.com',
+        subject: `Career Application: ${positionTitle}`,
+        message: `Candidate application for ${positionTitle}.\nCandidate: ${fullName}\nPhone: ${phone}\nEmail: ${email || 'None'}\nAge: ${age || 'N/A'}\nGender: ${gender || 'N/A'}\nCV: ${cvUrl || 'None'}`,
+        status: 'unread'
+      }]);
+    } catch (contactErr) {
+      console.warn('Backup application contact insert error:', contactErr);
+    }
+  }
+
+  return normalizedEntry;
+};
+
+export const fetchCareerApplications = async () => {
+  const localKey = 'the_loft_local_career_applications';
+  const entries: any[] = [];
+  const seen = new Set<string>();
+
+  // 1. Fetch from Supabase career_applications table
+  if (checkConfig()) {
+    try {
+      const { data, error } = await supabase
+        .from('career_applications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length > 0) {
+        data.forEach((item: any) => {
+          const key = (item.id || `${item.phone}-${item.position_id}`).toLowerCase();
+          if (!seen.has(key)) {
+            seen.add(key);
+
+            // Parse age and gender if stored in cover_note or experience_years
+            let parsedAge = item.age ? String(item.age) : '';
+            let parsedGender = item.gender || '';
+
+            if (!parsedAge && item.cover_note) {
+              const ageMatch = item.cover_note.match(/Age:\s*([0-9]+)/i);
+              if (ageMatch) parsedAge = ageMatch[1];
+            }
+            if (!parsedAge && item.experience_years) {
+              const ageMatch = item.experience_years.match(/([0-9]+)\s*(?:yrs|years)/i);
+              if (ageMatch) parsedAge = ageMatch[1];
+            }
+
+            if (!parsedGender && item.cover_note) {
+              const genderMatch = item.cover_note.match(/Gender:\s*([^|\n]+)/i);
+              if (genderMatch) parsedGender = genderMatch[1].trim();
+            }
+            if (!parsedGender && item.experience_years) {
+              const genderMatch = item.experience_years.match(/\((Female|Male|Other|Prefer not to say)\)/i);
+              if (genderMatch) parsedGender = genderMatch[1].trim();
+            }
+
+            entries.push({
+              ...item,
+              age: parsedAge,
+              gender: parsedGender
+            });
+          }
+        });
+      }
+    } catch (err) {
+      console.warn('Error fetching career applications from Supabase:', err);
+    }
+
+    // 2. Fetch career inquiries from contacts table fallback
+    try {
+      const { data: contactsData, error: contactsError } = await supabase
+        .from('contacts')
+        .select('*')
+        .ilike('subject', '%Career Application%')
+        .order('created_at', { ascending: false });
+
+      if (!contactsError && contactsData) {
+        contactsData.forEach((c: any) => {
+          const key = `contact-${c.phone}-${c.created_at}`.toLowerCase();
+          if (!seen.has(key)) {
+            const posTitle = (c.subject || '').replace(/^Career Application:\s*/i, '').trim() || 'General Position';
+            
+            const ageMatch = (c.message || '').match(/Age:\s*([0-9]+)/i);
+            const genderMatch = (c.message || '').match(/Gender:\s*([^|\n]+)/i);
+            const cvMatch = (c.message || '').match(/CV:\s*(https?:\/\/[^\s]+|data:[^\s]+)/i);
+
+            seen.add(key);
+            entries.push({
+              id: c.id,
+              full_name: c.name,
+              phone: c.phone,
+              email: c.email && !c.email.includes('theloftbynm.com') ? c.email : '',
+              position_title: posTitle,
+              position_id: 'pos-general',
+              age: ageMatch ? ageMatch[1] : '',
+              gender: genderMatch ? genderMatch[1].trim() : '',
+              cv_url: cvMatch ? cvMatch[1] : null,
+              status: c.status === 'read' ? 'reviewed' : 'pending',
+              cover_note: c.message,
+              created_at: c.created_at
+            });
+          }
+        });
+      }
+    } catch (contactErr) {
+      console.warn('Contacts fallback fetch notice:', contactErr);
+    }
+  }
+
+  // 3. Merge local storage backup
+  try {
+    const localData = JSON.parse(localStorage.getItem(localKey) || '[]');
+    localData.forEach((item: any) => {
+      const key = (item.id || `${item.phone}-${item.position_id}`).toLowerCase();
+      const phoneKey = `${item.phone}-${item.position_title}`.toLowerCase();
+      if (!seen.has(key) && !seen.has(phoneKey)) {
+        seen.add(key);
+        seen.add(phoneKey);
+        entries.push(item);
+      }
+    });
+  } catch (e) {
+    console.warn('Local storage read error:', e);
+  }
+
+  return entries.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+};
+
+export const updateCareerApplicationStatus = async (id: string, status: string) => {
+  const localKey = 'the_loft_local_career_applications';
+  try {
+    const localData = JSON.parse(localStorage.getItem(localKey) || '[]');
+    const updated = localData.map((a: any) => a.id === id ? { ...a, status } : a);
+    localStorage.setItem(localKey, JSON.stringify(updated));
+  } catch (e) {}
+
   if (!checkConfig()) return null;
   try {
     const { data, error } = await supabase
       .from('career_applications')
-      .insert([application]);
-    if (error) {
-      console.warn('career_applications table not ready in Supabase yet:', error.message);
-      return null;
-    }
-    return data || true;
+      .update({ status })
+      .eq('id', id)
+      .select();
+    if (error) console.warn('Supabase status update error:', error.message);
+    return data;
   } catch (err) {
-    console.warn('Error saving career application to Supabase:', err);
+    console.warn('Error updating career application status:', err);
     return null;
   }
 };
 
-export const fetchCareerApplications = async () => {
-  if (!checkConfig()) return [];
-  try {
-    const { data, error } = await supabase
-      .from('career_applications')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
-  } catch (err) {
-    console.warn('Error fetching career applications:', err);
-    return [];
-  }
-};
-
-export const updateCareerApplicationStatus = async (id: string, status: string) => {
-  if (!checkConfig()) return null;
-  const { data, error } = await supabase
-    .from('career_applications')
-    .update({ status })
-    .eq('id', id)
-    .select();
-  if (error) throw error;
-  return data;
-};
-
 export const deleteCareerApplication = async (id: string) => {
+  const localKey = 'the_loft_local_career_applications';
+  try {
+    const localData = JSON.parse(localStorage.getItem(localKey) || '[]');
+    const updated = localData.filter((a: any) => a.id !== id);
+    localStorage.setItem(localKey, JSON.stringify(updated));
+  } catch (e) {}
+
   if (!checkConfig()) return;
-  const { error } = await supabase
-    .from('career_applications')
-    .delete()
-    .eq('id', id);
-  if (error) throw error;
+  try {
+    const { error } = await supabase
+      .from('career_applications')
+      .delete()
+      .eq('id', id);
+    if (error) console.warn('Supabase delete error:', error.message);
+  } catch (err) {
+    console.warn('Error deleting career application:', err);
+  }
 };
 
 // --- VIP PRE-LAUNCH WAITLIST ---

@@ -410,6 +410,16 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
                         selectedCvFile
                     );
 
+                // Fallback to data URL for local review if bucket upload is restricted
+                if (!finalCvUrl && selectedCvFile.size <= 3 * 1024 * 1024) {
+                    finalCvUrl = await new Promise<string | null>((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+                        reader.onerror = () => resolve(null);
+                        reader.readAsDataURL(selectedCvFile);
+                    });
+                }
+
                 if (finalCvUrl) {
                     setUploadedCvUrl(
                         finalCvUrl
@@ -951,7 +961,7 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
                                               key={p.id}
                                               value={p.id}
                                           >
-                                              {p.title} ({p.department}) — {p.type}
+                                              {p.title} ({p.department}){p.type ? ' - ' + p.type : ''}
                                           </option>
                                       ))}
 

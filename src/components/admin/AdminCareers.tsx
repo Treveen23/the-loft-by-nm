@@ -16,12 +16,14 @@ import {
   Mail,
   Calendar,
   Eye,
-  Check,
   Power,
   Sparkles,
   Database,
   FileText,
-  Download
+  Download,
+  ChevronDown,
+  ChevronUp,
+  UserCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -42,14 +44,16 @@ export default function AdminCareers() {
 
   // Positions State
   const [positions, setPositions] = useState<any[]>([]);
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState('All');
   const [isPositionModalOpen, setIsPositionModalOpen] = useState(false);
   const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
+  const [showAdvancedPositionFields, setShowAdvancedPositionFields] = useState(false);
   const [positionForm, setPositionForm] = useState({
     id: '',
     title: '',
     department: 'Nails',
-    type: 'Full-Time / Part-Time',
-    experience: '1+ Years Required',
+    type: 'Full-Time',
+    experience: 'Experience Preferred',
     summary: '',
     description: '',
     responsibilitiesText: '',
@@ -82,6 +86,8 @@ export default function AdminCareers() {
         // Fallback to default in-memory positions
         setPositions(DEFAULT_CAREER_POSITIONS.map(p => ({
           ...p,
+          summary: p.summary || '',
+          description: p.description || p.summary || '',
           key_responsibilities: p.keyResponsibilities || [],
           requirements: p.requirements || [],
           benefits: p.benefits || [],
@@ -100,12 +106,13 @@ export default function AdminCareers() {
   // --- POSITION ACTIONS ---
   const handleOpenNewPosition = () => {
     setEditingPositionId(null);
+    setShowAdvancedPositionFields(false);
     setPositionForm({
       id: `pos-${Date.now()}`,
       title: '',
       department: 'Nails',
       type: 'Full-Time',
-      experience: '1+ Years Required',
+      experience: 'Experience Preferred',
       summary: '',
       description: '',
       responsibilitiesText: '',
@@ -118,14 +125,15 @@ export default function AdminCareers() {
 
   const handleOpenEditPosition = (pos: any) => {
     setEditingPositionId(pos.id);
+    setShowAdvancedPositionFields(Boolean(pos.experience && pos.experience !== 'Experience Preferred'));
     setPositionForm({
       id: pos.id,
       title: pos.title,
-      department: pos.department,
+      department: pos.department || 'Nails',
       type: pos.type || 'Full-Time',
-      experience: pos.experience || '',
+      experience: pos.experience || 'Experience Preferred',
       summary: pos.summary || '',
-      description: pos.description || '',
+      description: pos.description || pos.summary || '',
       responsibilitiesText: Array.isArray(pos.key_responsibilities) ? pos.key_responsibilities.join('\n') : '',
       requirementsText: Array.isArray(pos.requirements) ? pos.requirements.join('\n') : '',
       benefitsText: Array.isArray(pos.benefits) ? pos.benefits.join('\n') : '',
@@ -141,22 +149,27 @@ export default function AdminCareers() {
       return;
     }
 
+    if (!positionForm.summary.trim()) {
+      toast.error('Role summary / description is required');
+      return;
+    }
+
     const payload = {
       id: positionForm.id || `pos-${Date.now()}`,
-      title: positionForm.title,
+      title: positionForm.title.trim(),
       department: positionForm.department,
-      type: positionForm.type,
-      experience: positionForm.experience,
-      summary: positionForm.summary,
-      description: positionForm.description,
+      type: positionForm.type || 'Full-Time',
+      experience: positionForm.experience || 'Experience Preferred',
+      summary: positionForm.summary.trim(),
+      description: positionForm.description.trim() || positionForm.summary.trim(),
       key_responsibilities: positionForm.responsibilitiesText
-        ? positionForm.responsibilitiesText.split('\n').filter(s => s.trim())
+        ? positionForm.responsibilitiesText.split('\n').map(s => s.trim()).filter(Boolean)
         : [],
       requirements: positionForm.requirementsText
-        ? positionForm.requirementsText.split('\n').filter(s => s.trim())
+        ? positionForm.requirementsText.split('\n').map(s => s.trim()).filter(Boolean)
         : [],
       benefits: positionForm.benefitsText
-        ? positionForm.benefitsText.split('\n').filter(s => s.trim())
+        ? positionForm.benefitsText.split('\n').map(s => s.trim()).filter(Boolean)
         : [],
       is_active: positionForm.is_active
     };
@@ -167,7 +180,7 @@ export default function AdminCareers() {
         toast.success('Position updated successfully');
       } else {
         await createCareerPosition(payload);
-        toast.success('New position published');
+        toast.success('New vacancy published live to Join Us page');
       }
       setIsPositionModalOpen(false);
       loadAllData();
@@ -181,7 +194,7 @@ export default function AdminCareers() {
     const updatedStatus = !pos.is_active;
     try {
       await updateCareerPosition(pos.id, { is_active: updatedStatus });
-      toast.success(updatedStatus ? 'Position activated' : 'Position paused');
+      toast.success(updatedStatus ? 'Vacancy is now Live on Join Us' : 'Vacancy paused');
       setPositions(prev =>
         prev.map(p => (p.id === pos.id ? { ...p, is_active: updatedStatus } : p))
       );
@@ -204,19 +217,19 @@ export default function AdminCareers() {
   // Seed default positions into Supabase if table is empty
   const handleSeedDefaults = async () => {
     try {
-      toast.info('Seeding default positions into Supabase...');
+      toast.info('Seeding default positions into database...');
       for (const pos of DEFAULT_CAREER_POSITIONS) {
         await createCareerPosition({
           id: pos.id,
           title: pos.title,
           department: pos.department,
-          type: pos.type,
-          experience: pos.experience,
+          type: pos.type || 'Full-Time',
+          experience: pos.experience || 'Experience Preferred',
           summary: pos.summary,
-          description: pos.description,
-          key_responsibilities: pos.keyResponsibilities || [],
-          requirements: pos.requirements || [],
-          benefits: pos.benefits || [],
+          description: pos.summary,
+          key_responsibilities: [],
+          requirements: [],
+          benefits: [],
           is_active: true
         });
       }
@@ -256,12 +269,21 @@ export default function AdminCareers() {
   };
 
   const handleOpenWhatsAppChat = (app: any) => {
-    const cleanPhone = app.phone.replace(/[^0-9]/g, '');
+    const cleanPhone = (app.phone || '').replace(/[^0-9]/g, '');
     const message = encodeURIComponent(
-      `Hello ${app.full_name}, thank you for applying for the ${app.position_title} role at The Loft by NM. We reviewed your credentials and would love to connect.`
+      `Hello ${app.full_name}, thank you for your application for the ${app.position_title} role at The Loft by NM. We reviewed your profile and would love to connect with you.`
     );
     window.open(`https://wa.me/${cleanPhone}?text=${message}`, '_blank');
   };
+
+  // Departments list matching public website
+  const departments = ['All', 'Nails', 'Hair', 'Skincare', 'Wellness', 'General'];
+
+  // Filtered positions based on department tab
+  const filteredPositions =
+    selectedDeptFilter === 'All'
+      ? positions
+      : positions.filter(pos => pos.department === selectedDeptFilter);
 
   // Filtering Applications
   const filteredApplications = applications.filter(app => {
@@ -269,7 +291,8 @@ export default function AdminCareers() {
       (app.full_name || '').toLowerCase().includes(appSearch.toLowerCase()) ||
       (app.phone || '').toLowerCase().includes(appSearch.toLowerCase()) ||
       (app.position_title || '').toLowerCase().includes(appSearch.toLowerCase()) ||
-      (app.email || '').toLowerCase().includes(appSearch.toLowerCase());
+      (app.email || '').toLowerCase().includes(appSearch.toLowerCase()) ||
+      (app.gender || '').toLowerCase().includes(appSearch.toLowerCase());
     const matchesStatus = appStatusFilter === 'all' || app.status === appStatusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -309,7 +332,7 @@ export default function AdminCareers() {
               Careers &amp; <span className="text-gold italic font-normal">Applications</span>.
             </h2>
             <p className="text-xs sm:text-sm text-charcoal/70 font-sans tracking-wide max-w-xl leading-relaxed">
-              Review candidate portfolios, connect directly on WhatsApp, and manage active salon vacancies.
+              Review candidate submissions (with age, gender, and CV attachments) and manage open positions matching the current website design.
             </p>
           </div>
 
@@ -350,7 +373,7 @@ export default function AdminCareers() {
             }`}
           >
             <Briefcase size={14} />
-            <span>Open Vacancies</span>
+            <span>Open Positions</span>
             <span className="px-2 py-0.5 rounded-full text-[10px] bg-charcoal/10 text-charcoal font-bold">
               {positions.length}
             </span>
@@ -359,30 +382,31 @@ export default function AdminCareers() {
       </header>
 
       {/* ========================================================================= */}
-      {/* 1. APPLICATIONS SUB-TAB */}
+      {/* 1. CANDIDATE APPLICATIONS SUB-TAB */}
       {/* ========================================================================= */}
       {activeSubTab === 'applications' && (
         <div className="space-y-6">
-          {/* Search & Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-2xl border border-charcoal/10 shadow-sm">
+          {/* Controls / Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-charcoal/10 shadow-sm">
             <div className="relative flex-1">
-              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-charcoal/40" size={16} />
               <input
                 type="text"
-                placeholder="Search by candidate name, phone, position..."
+                placeholder="Search candidates by name, position, phone, or gender..."
                 value={appSearch}
                 onChange={e => setAppSearch(e.target.value)}
-                className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-charcoal/5 border border-charcoal/10 rounded-xl text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50"
               />
             </div>
-            <div className="relative min-w-[180px]">
-              <Filter size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-charcoal/40" />
+
+            <div className="flex items-center gap-2">
+              <Filter size={15} className="text-charcoal/40 hidden sm:block" />
               <select
                 value={appStatusFilter}
                 onChange={e => setAppStatusFilter(e.target.value)}
-                className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50 focus:ring-1 focus:ring-gold/50 transition-all appearance-none cursor-pointer"
+                className="bg-charcoal/5 border border-charcoal/10 rounded-xl px-3.5 py-2.5 text-xs text-charcoal font-medium focus:outline-none focus:border-gold/50 cursor-pointer"
               >
-                <option value="all">All Statuses</option>
+                <option value="all">All Statuses ({applications.length})</option>
                 <option value="pending">Pending</option>
                 <option value="reviewed">Reviewed</option>
                 <option value="contacted">Contacted</option>
@@ -393,10 +417,10 @@ export default function AdminCareers() {
             </div>
           </div>
 
-          {/* Applications Table */}
+          {/* Table Container */}
           {filteredApplications.length === 0 ? (
-            <div className="p-12 text-center bg-white rounded-2xl border border-charcoal/10 text-charcoal/60">
-              <Users size={32} className="mx-auto mb-3 text-charcoal/30" />
+            <div className="bg-white rounded-2xl border border-charcoal/10 p-12 text-center text-charcoal/60">
+              <Users size={36} className="mx-auto mb-3 text-charcoal/30" />
               <p className="text-sm font-medium">No candidate applications found.</p>
               <p className="text-xs text-charcoal/40 mt-1">
                 Submissions from the public "Join Us" page will appear here instantly.
@@ -409,9 +433,10 @@ export default function AdminCareers() {
                   <thead>
                     <tr className="bg-charcoal/5 text-charcoal/60 uppercase tracking-widest text-[10px] font-bold border-b border-charcoal/10">
                       <th className="py-4 px-6">Candidate</th>
-                      <th className="py-4 px-6">Position</th>
-                      <th className="py-4 px-6">Experience</th>
-                      <th className="py-4 px-6">Date</th>
+                      <th className="py-4 px-6">Applied Role</th>
+                      <th className="py-4 px-6">Age &amp; Gender</th>
+                      <th className="py-4 px-6">CV Document</th>
+                      <th className="py-4 px-6">Applied Date</th>
                       <th className="py-4 px-6">Status</th>
                       <th className="py-4 px-6 text-right">Actions</th>
                     </tr>
@@ -419,44 +444,72 @@ export default function AdminCareers() {
                   <tbody className="divide-y divide-charcoal/5">
                     {filteredApplications.map(app => (
                       <tr key={app.id} className="hover:bg-charcoal/[0.02] transition-colors">
+                        {/* Candidate Name & Contact */}
                         <td className="py-4 px-6">
-                          <div className="font-semibold text-charcoal">{app.full_name}</div>
+                          <div className="font-semibold text-charcoal text-sm">{app.full_name}</div>
                           <div className="text-xs text-charcoal/60 flex items-center gap-2 mt-0.5">
-                            <span>{app.phone}</span>
+                            <span className="font-mono">{app.phone}</span>
                             {app.email && (
                               <>
                                 <span>•</span>
-                                <span>{app.email}</span>
+                                <span className="truncate max-w-[150px]">{app.email}</span>
                               </>
                             )}
                           </div>
                         </td>
 
+                        {/* Applied Role */}
                         <td className="py-4 px-6">
-                          <span className="font-medium text-charcoal">{app.position_title}</span>
-                          {app.portfolio_url && (
-                            <div className="text-xs text-gold flex items-center gap-1 mt-0.5">
-                              <ExternalLink size={10} />
-                              <span className="truncate max-w-[150px]">{app.portfolio_url}</span>
-                            </div>
-                          )}
+                          <span className="font-medium text-charcoal block">{app.position_title}</span>
+                          <span className="text-[10px] text-gold uppercase tracking-wider font-semibold">
+                            Vacancy ID: {app.position_id}
+                          </span>
                         </td>
 
+                        {/* Age & Gender */}
                         <td className="py-4 px-6">
-                          <div className="text-xs text-charcoal/80 font-medium">
-                            {app.experience_years || 'Not specified'}
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {app.age ? (
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-charcoal/5 text-charcoal">
+                                {app.age} yrs
+                              </span>
+                            ) : null}
+                            {app.gender ? (
+                              <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gold/15 text-gold border border-gold/30">
+                                {app.gender}
+                              </span>
+                            ) : null}
+                            {!app.age && !app.gender && (
+                              <span className="text-xs text-charcoal/40 italic">Not specified</span>
+                            )}
                           </div>
-                          {app.previous_salon && (
-                            <div className="text-[11px] text-charcoal/50 truncate max-w-[140px]">
-                              {app.previous_salon}
-                            </div>
+                        </td>
+
+                        {/* CV Document */}
+                        <td className="py-4 px-6">
+                          {app.cv_url ? (
+                            <a
+                              href={app.cv_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gold/15 text-gold border border-gold/30 hover:bg-gold hover:text-charcoal text-xs font-semibold transition-all cursor-pointer shadow-xs"
+                              title="Click to view/download applicant CV"
+                            >
+                              <FileText size={13} />
+                              <span>View CV</span>
+                              <ExternalLink size={11} />
+                            </a>
+                          ) : (
+                            <span className="text-xs text-charcoal/40 italic">No CV attached</span>
                           )}
                         </td>
 
+                        {/* Date */}
                         <td className="py-4 px-6 text-xs text-charcoal/60 whitespace-nowrap">
                           {app.created_at ? new Date(app.created_at).toLocaleDateString() : 'Recent'}
                         </td>
 
+                        {/* Status Dropdown */}
                         <td className="py-4 px-6 whitespace-nowrap">
                           <select
                             value={app.status || 'pending'}
@@ -474,28 +527,19 @@ export default function AdminCareers() {
                           </select>
                         </td>
 
+                        {/* Actions */}
                         <td className="py-4 px-6 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {app.cv_url && (
-                              <a
-                                href={app.cv_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                title="Download / View Candidate CV"
-                                className="p-2 rounded-lg bg-gold/15 text-gold hover:bg-gold hover:text-charcoal transition-colors cursor-pointer"
-                              >
-                                <FileText size={15} />
-                              </a>
-                            )}
-
+                            {/* WhatsApp Button */}
                             <button
                               onClick={() => handleOpenWhatsAppChat(app)}
-                              title="Chat on WhatsApp"
+                              title="Chat with applicant on WhatsApp"
                               className="p-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
                             >
                               <MessageCircle size={15} />
                             </button>
 
+                            {/* View Full Dossier */}
                             <button
                               onClick={() => setSelectedApp(app)}
                               title="View Application Details"
@@ -504,9 +548,10 @@ export default function AdminCareers() {
                               <Eye size={15} />
                             </button>
 
+                            {/* Delete */}
                             <button
                               onClick={() => handleDeleteApplication(app.id)}
-                              title="Delete"
+                              title="Delete Application"
                               className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
                             >
                               <Trash2 size={15} />
@@ -524,95 +569,145 @@ export default function AdminCareers() {
       )}
 
       {/* ========================================================================= */}
-      {/* 2. OPEN POSITIONS SUB-TAB */}
+      {/* 2. OPEN POSITIONS SUB-TAB (MATCHING CURRENT WEB PAGE VERSION) */}
       {/* ========================================================================= */}
       {activeSubTab === 'positions' && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <p className="text-xs sm:text-sm text-charcoal/70">
-              Active positions appear live on the public <strong>Join Us</strong> page.
-            </p>
+          {/* Top Bar with Department Filters & Live count */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-charcoal/10 shadow-sm">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold uppercase tracking-wider text-charcoal/50 mr-2">
+                Filter:
+              </span>
+              {departments.map(dept => (
+                <button
+                  key={dept}
+                  onClick={() => setSelectedDeptFilter(dept)}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wider transition-all cursor-pointer ${
+                    selectedDeptFilter === dept
+                      ? 'bg-charcoal text-ivory shadow-xs'
+                      : 'text-charcoal/70 hover:text-charcoal hover:bg-charcoal/5'
+                  }`}
+                >
+                  {dept}
+                </button>
+              ))}
+            </div>
 
-            {positions.length === 0 && (
+            <div className="flex items-center gap-3 self-end md:self-center">
+              {positions.length === 0 && (
+                <button
+                  onClick={handleSeedDefaults}
+                  className="px-4 py-2 bg-gold/15 text-gold border border-gold/30 hover:bg-gold hover:text-charcoal text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Database size={13} />
+                  <span>Seed Default 4 Positions</span>
+                </button>
+              )}
+
               <button
-                onClick={handleSeedDefaults}
-                className="px-4 py-2 bg-gold/15 text-gold border border-gold/30 hover:bg-gold hover:text-charcoal text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5"
+                onClick={handleOpenNewPosition}
+                className="px-4 py-2 bg-charcoal text-ivory hover:bg-gold hover:text-charcoal text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
-                <Database size={13} />
-                <span>Seed Default 4 Positions</span>
+                <Plus size={14} />
+                <span>Add Position</span>
               </button>
-            )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {positions.map(pos => {
+          {/* Helper Notice */}
+          <div className="flex items-center justify-between text-xs text-charcoal/60 px-1">
+            <span>
+              Showing {filteredPositions.length} vacancies matching web layout (Department • Title • Description • Status).
+            </span>
+            <span className="text-gold font-medium">
+              Changes reflect live on the website immediately.
+            </span>
+          </div>
+
+          {/* Positions Directory Cards - MATCHING WEB PAGE CARDS */}
+          <div className="space-y-4">
+            {filteredPositions.map(pos => {
               const isActive = pos.is_active !== false;
 
               return (
                 <div
                   key={pos.id}
-                  className={`bg-white rounded-2xl border p-6 shadow-sm transition-all duration-300 flex flex-col justify-between ${
-                    isActive ? 'border-charcoal/10 hover:border-gold/50' : 'border-charcoal/10 opacity-70 bg-gray-50'
+                  className={`rounded-2xl border transition-all duration-300 overflow-hidden bg-white/95 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 ${
+                    isActive
+                      ? 'border-gold/30 hover:border-gold/60'
+                      : 'border-charcoal/15 opacity-65 bg-gray-50/80'
                   }`}
                 >
-                  <div>
-                    {/* Header line */}
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gold/15 text-gold border border-gold/30">
-                            {pos.department}
-                          </span>
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-charcoal/5 text-charcoal/70">
-                            {pos.type}
-                          </span>
-                        </div>
-                        <h3 className="text-xl font-serif text-charcoal font-medium">
-                          {pos.title}
-                        </h3>
-                      </div>
+                  {/* Position Details Matching Web Page */}
+                  <div className="space-y-3 flex-1 text-left">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      {/* Department Badge */}
+                      <span className="inline-block px-3 py-1 bg-gold/15 text-gold border border-gold/30 rounded-full text-xs font-semibold tracking-widest uppercase">
+                        {pos.department}
+                      </span>
 
-                      {/* Active Toggle Switch */}
-                      <button
-                        onClick={() => handleTogglePositionStatus(pos)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${
-                          isActive
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-charcoal/5 text-charcoal/50 border border-charcoal/10'
-                        }`}
-                        title="Click to toggle live status"
-                      >
-                        <Power size={12} />
-                        <span>{isActive ? 'Live' : 'Paused'}</span>
-                      </button>
+                      {/* Web View Preview Badge */}
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-charcoal/5 text-charcoal/60">
+                        <Sparkles size={10} className="text-gold" />
+                        Web Layout
+                      </span>
+
+                      {/* Type Badge if specified */}
+                      {pos.type && (
+                        <span className="text-[11px] text-charcoal/50 font-medium">
+                          • {pos.type}
+                        </span>
+                      )}
                     </div>
 
-                    <p className="text-xs text-charcoal/70 leading-relaxed mb-4 line-clamp-3">
+                    {/* Role Title */}
+                    <h3 className="font-serif text-2xl sm:text-3xl text-charcoal font-medium">
+                      {pos.title}
+                    </h3>
+
+                    {/* Role Summary / Description */}
+                    <p className="text-sm sm:text-base text-charcoal/80 font-normal leading-relaxed max-w-3xl">
                       {pos.summary}
                     </p>
 
-                    <div className="text-xs text-charcoal/60 mb-2">
-                      <strong className="text-charcoal">Experience:</strong> {pos.experience}
+                    <div className="text-[11px] text-charcoal/40 font-mono pt-1">
+                      ID: {pos.id}
                     </div>
                   </div>
 
-                  {/* Footer Action buttons */}
-                  <div className="mt-6 pt-4 border-t border-charcoal/5 flex items-center justify-between">
-                    <span className="text-[11px] text-charcoal/40 font-mono">ID: {pos.id}</span>
+                  {/* Actions & Status Controls */}
+                  <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-start sm:items-center gap-3 shrink-0 self-start md:self-center">
+                    {/* Live / Paused Status Toggle */}
+                    <button
+                      onClick={() => handleTogglePositionStatus(pos)}
+                      className={`px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${
+                        isActive
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                          : 'bg-charcoal/5 text-charcoal/60 border border-charcoal/20 hover:bg-charcoal/10'
+                      }`}
+                      title="Click to toggle live status on website"
+                    >
+                      <Power size={13} />
+                      <span>{isActive ? 'Live on Site' : 'Paused (Draft)'}</span>
+                    </button>
+
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleOpenEditPosition(pos)}
-                        className="p-2 rounded-lg bg-charcoal/5 hover:bg-charcoal/10 text-charcoal transition-colors cursor-pointer"
+                        className="px-3.5 py-2 rounded-xl bg-charcoal/5 hover:bg-charcoal/10 text-charcoal text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
                         title="Edit Position"
                       >
                         <Edit size={14} />
+                        <span>Edit</span>
                       </button>
+
                       <button
                         onClick={() => handleDeletePosition(pos.id, pos.title)}
-                        className="p-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
+                        className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer"
                         title="Delete Position"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </div>
@@ -624,20 +719,20 @@ export default function AdminCareers() {
       )}
 
       {/* ========================================================================= */}
-      {/* 3. APPLICATION DETAIL MODAL */}
+      {/* 3. APPLICATION DETAIL DOSSIER MODAL */}
       {/* ========================================================================= */}
       {selectedApp && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 border border-charcoal/10 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setSelectedApp(null)}
-              className="absolute top-6 right-6 p-2 rounded-full bg-charcoal/5 hover:bg-charcoal/10 text-charcoal transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-full bg-charcoal/5 hover:bg-charcoal/10 text-charcoal transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
 
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/15 text-gold border border-gold/30 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
-              Application Dossier
+              Candidate Dossier
             </div>
 
             <h3 className="text-2xl font-serif text-charcoal mb-1">{selectedApp.full_name}</h3>
@@ -649,48 +744,24 @@ export default function AdminCareers() {
               <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-charcoal/[0.02] border border-charcoal/5">
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-0.5">Phone</div>
-                  <div className="font-semibold text-charcoal">{selectedApp.phone}</div>
+                  <div className="font-semibold text-charcoal font-mono">{selectedApp.phone}</div>
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-0.5">Email</div>
-                  <div className="font-semibold text-charcoal">{selectedApp.email || 'N/A'}</div>
+                  <div className="font-semibold text-charcoal truncate">{selectedApp.email || 'Not provided'}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-0.5">Experience</div>
-                  <div className="font-semibold text-charcoal">{selectedApp.experience_years || 'Not specified'}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-0.5">Age</div>
+                  <div className="font-semibold text-charcoal">{selectedApp.age ? `${selectedApp.age} years old` : 'Not provided'}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-0.5">Previous Studio</div>
-                  <div className="font-semibold text-charcoal">{selectedApp.previous_salon || 'N/A'}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-0.5">Gender</div>
+                  <div className="font-semibold text-charcoal">{selectedApp.gender || 'Not provided'}</div>
                 </div>
               </div>
 
-              {selectedApp.portfolio_url && (
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-1">Portfolio / Instagram</div>
-                  <a
-                    href={selectedApp.portfolio_url.startsWith('http') ? selectedApp.portfolio_url : `https://${selectedApp.portfolio_url}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-gold hover:underline font-medium"
-                  >
-                    <span>{selectedApp.portfolio_url}</span>
-                    <ExternalLink size={12} />
-                  </a>
-                </div>
-              )}
-
-              {selectedApp.cover_note && (
-                <div>
-                  <div className="text-[10px] uppercase tracking-wider text-charcoal/40 font-bold mb-1">Cover Note &amp; Motivation</div>
-                  <div className="p-4 rounded-xl bg-ivory/60 border border-charcoal/10 text-charcoal/80 leading-relaxed font-light whitespace-pre-line">
-                    {selectedApp.cover_note}
-                  </div>
-                </div>
-              )}
-
-              {/* CV Attachment Banner */}
-              {selectedApp.cv_url && (
+              {/* CV Document Section */}
+              {selectedApp.cv_url ? (
                 <div className="p-4 rounded-2xl bg-gold/10 border border-gold/30 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gold text-charcoal flex items-center justify-center font-bold shrink-0">
@@ -698,20 +769,53 @@ export default function AdminCareers() {
                     </div>
                     <div>
                       <div className="text-xs font-semibold text-charcoal">Attached Curriculum Vitae (CV)</div>
-                      <div className="text-[11px] text-charcoal/60">Candidate document uploaded to secure storage</div>
+                      <div className="text-[11px] text-charcoal/60">Candidate document attached to application</div>
                     </div>
                   </div>
                   <a
                     href={selectedApp.cv_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-4 py-2 bg-charcoal hover:bg-gold hover:text-charcoal text-ivory rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1.5 shrink-0"
+                    className="px-4 py-2 bg-charcoal hover:bg-gold hover:text-charcoal text-ivory rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
                   >
                     <Download size={14} />
                     <span>View CV</span>
                   </a>
                 </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-charcoal/[0.03] border border-charcoal/10 text-center text-charcoal/50 text-xs">
+                  No CV was uploaded for this submission.
+                </div>
               )}
+
+              {/* Quick Actions (WhatsApp, Call, Email) */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
+                <button
+                  onClick={() => handleOpenWhatsAppChat(selectedApp)}
+                  className="px-3 py-2.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <MessageCircle size={14} />
+                  <span>WhatsApp</span>
+                </button>
+
+                <a
+                  href={`tel:${selectedApp.phone}`}
+                  className="px-3 py-2.5 rounded-xl bg-charcoal/5 hover:bg-charcoal/10 text-charcoal font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Phone size={14} />
+                  <span>Call Phone</span>
+                </a>
+
+                {selectedApp.email ? (
+                  <a
+                    href={`mailto:${selectedApp.email}?subject=Application for ${selectedApp.position_title} at The Loft by NM`}
+                    className="px-3 py-2.5 rounded-xl bg-charcoal/5 hover:bg-charcoal/10 text-charcoal font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer col-span-2 sm:col-span-1"
+                  >
+                    <Mail size={14} />
+                    <span>Send Email</span>
+                  </a>
+                ) : null}
+              </div>
 
               {/* Status Update Bar */}
               <div className="pt-4 border-t border-charcoal/10 flex items-center justify-between">
@@ -734,11 +838,11 @@ export default function AdminCareers() {
                 </div>
 
                 <button
-                  onClick={() => handleOpenWhatsAppChat(selectedApp)}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold tracking-wider uppercase flex items-center gap-2 transition-colors cursor-pointer"
+                  onClick={() => handleDeleteApplication(selectedApp.id)}
+                  className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1 font-semibold cursor-pointer"
                 >
-                  <MessageCircle size={15} />
-                  <span>Chat on WhatsApp</span>
+                  <Trash2 size={13} />
+                  <span>Delete Dossier</span>
                 </button>
               </div>
             </div>
@@ -747,29 +851,34 @@ export default function AdminCareers() {
       )}
 
       {/* ========================================================================= */}
-      {/* 4. POSITION CREATE / EDIT MODAL */}
+      {/* 4. POSITION CREATE / EDIT MODAL (STREAMLINED FOR CURRENT WEB PAGE) */}
       {/* ========================================================================= */}
       {isPositionModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 border border-charcoal/10 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setIsPositionModalOpen(false)}
-              className="absolute top-6 right-6 p-2 rounded-full bg-charcoal/5 hover:bg-charcoal/10 text-charcoal transition-colors"
+              className="absolute top-6 right-6 p-2 rounded-full bg-charcoal/5 hover:bg-charcoal/10 text-charcoal transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
 
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gold/15 text-gold border border-gold/30 rounded-full text-[10px] font-bold uppercase tracking-widest mb-3">
+              Web Job Post
+            </div>
+
             <h3 className="text-2xl font-serif text-charcoal mb-1">
-              {editingPositionId ? 'Edit Vacancy' : 'Create New Position'}
+              {editingPositionId ? 'Edit Vacancy' : 'Post New Vacancy'}
             </h3>
             <p className="text-xs text-charcoal/60 mb-6">
-              Configure job title, department, responsibilities and candidate perks.
+              Configure job title, department, and role description to display on the public Join Us page.
             </p>
 
             <form onSubmit={handleSavePosition} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Job Title */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/70 mb-1">
                     Job Title *
                   </label>
                   <input
@@ -782,8 +891,9 @@ export default function AdminCareers() {
                   />
                 </div>
 
+                {/* Department Matching Web Tabs */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/70 mb-1">
                     Department *
                   </label>
                   <select
@@ -795,20 +905,38 @@ export default function AdminCareers() {
                     <option value="Hair">Hair</option>
                     <option value="Skincare">Skincare</option>
                     <option value="Wellness">Wellness</option>
-                    <option value="Front of House">Front of House</option>
-                    <option value="Bridal">Bridal</option>
+                    <option value="General">General</option>
                   </select>
                 </div>
               </div>
 
+              {/* Role Summary / Description (The primary text shown on the website card) */}
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/70 mb-1">
+                  Role Summary / Description * (Displayed on Join Us card)
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="Describe the role, key focus areas, client care standards, and ideal background..."
+                  value={positionForm.summary}
+                  onChange={e => setPositionForm(prev => ({ ...prev, summary: e.target.value }))}
+                  className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-3 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50 leading-relaxed"
+                />
+                <span className="text-[10px] text-charcoal/50">
+                  This description is shown prominently to applicants under the job title.
+                </span>
+              </div>
+
+              {/* Employment Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
-                    Employment Type
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/70 mb-1">
+                    Employment Type (Optional)
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Full-Time / Part-Time"
+                    placeholder="e.g. Full-Time, Part-Time"
                     value={positionForm.type}
                     onChange={e => setPositionForm(prev => ({ ...prev, type: e.target.value }))}
                     className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50"
@@ -816,12 +944,12 @@ export default function AdminCareers() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
-                    Experience Required
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/70 mb-1">
+                    Experience Level (Optional)
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 2+ Years Required"
+                    placeholder="e.g. 1+ Years Required"
                     value={positionForm.experience}
                     onChange={e => setPositionForm(prev => ({ ...prev, experience: e.target.value }))}
                     className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50"
@@ -829,71 +957,62 @@ export default function AdminCareers() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
-                  Summary (Brief card excerpt)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="Short, punchy summary of the role..."
-                  value={positionForm.summary}
-                  onChange={e => setPositionForm(prev => ({ ...prev, summary: e.target.value }))}
-                  className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50"
-                />
+              {/* Expandable Advanced Fields for extra database details */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedPositionFields(!showAdvancedPositionFields)}
+                  className="text-xs text-charcoal/60 hover:text-charcoal font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  {showAdvancedPositionFields ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  <span>{showAdvancedPositionFields ? 'Hide' : 'Show'} Advanced Details (Responsibilities, Requirements, Perks)</span>
+                </button>
+
+                {showAdvancedPositionFields && (
+                  <div className="space-y-4 pt-3 mt-2 border-t border-charcoal/10 animate-fadeIn">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
+                        Key Responsibilities (One per line)
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Perform luxury manicure & pedicure services...&#10;Consult with clients on customized therapies..."
+                        value={positionForm.responsibilitiesText}
+                        onChange={e => setPositionForm(prev => ({ ...prev, responsibilitiesText: e.target.value }))}
+                        className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2 text-xs text-charcoal focus:outline-none focus:border-gold/50 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
+                        Requirements (One per line)
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Recognized qualification...&#10;Hospital-grade sanitization standards..."
+                        value={positionForm.requirementsText}
+                        onChange={e => setPositionForm(prev => ({ ...prev, requirementsText: e.target.value }))}
+                        className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2 text-xs text-charcoal focus:outline-none focus:border-gold/50 font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
+                        Benefits &amp; Perks (One per line)
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Generous commission structure...&#10;Continuous masterclass training..."
+                        value={positionForm.benefitsText}
+                        onChange={e => setPositionForm(prev => ({ ...prev, benefitsText: e.target.value }))}
+                        className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2 text-xs text-charcoal focus:outline-none focus:border-gold/50 font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
-                  Full Role Description
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Detailed description of the role in the sanctuary..."
-                  value={positionForm.description}
-                  onChange={e => setPositionForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
-                  Key Responsibilities (One per line)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Perform manicure services...&#10;Consult with clients...&#10;Sterilize equipment..."
-                  value={positionForm.responsibilitiesText}
-                  onChange={e => setPositionForm(prev => ({ ...prev, responsibilitiesText: e.target.value }))}
-                  className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
-                  Requirements (One per line)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Recognized qualification...&#10;High hygiene standards...&#10;Professional portfolio..."
-                  value={positionForm.requirementsText}
-                  onChange={e => setPositionForm(prev => ({ ...prev, requirementsText: e.target.value }))}
-                  className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50 font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-charcoal/60 mb-1">
-                  Benefits &amp; Perks (One per line)
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Competitive salary + commissions...&#10;Continuous masterclasses...&#10;Staff wellness discounts..."
-                  value={positionForm.benefitsText}
-                  onChange={e => setPositionForm(prev => ({ ...prev, benefitsText: e.target.value }))}
-                  className="w-full bg-charcoal/5 border border-charcoal/10 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-charcoal focus:outline-none focus:border-gold/50 font-mono"
-                />
-              </div>
-
+              {/* Publish Toggle */}
               <div className="flex items-center gap-2 pt-2">
                 <input
                   type="checkbox"
@@ -903,11 +1022,12 @@ export default function AdminCareers() {
                   className="w-4 h-4 rounded text-gold focus:ring-gold cursor-pointer"
                 />
                 <label htmlFor="pos-is-active" className="text-xs font-semibold text-charcoal cursor-pointer">
-                  Publish vacancy immediately (visible on Join Us page)
+                  Publish vacancy immediately (visible live on Join Us page)
                 </label>
               </div>
 
-              <div className="pt-4 flex items-center justify-end gap-3">
+              {/* Modal Buttons */}
+              <div className="pt-4 flex items-center justify-end gap-3 border-t border-charcoal/10">
                 <button
                   type="button"
                   onClick={() => setIsPositionModalOpen(false)}
@@ -919,7 +1039,7 @@ export default function AdminCareers() {
                   type="submit"
                   className="px-6 py-2.5 bg-charcoal text-ivory hover:bg-gold hover:text-charcoal rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-sm"
                 >
-                  {editingPositionId ? 'Save Changes' : 'Create Position'}
+                  {editingPositionId ? 'Save Changes' : 'Publish Position'}
                 </button>
               </div>
             </form>
