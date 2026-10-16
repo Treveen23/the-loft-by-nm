@@ -1,8 +1,13 @@
-# https://www.robotstxt.org/robotstxt.html
+
+# Loft By NM - Robots.txt
+# Website: https://theloft.lk
+
 User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /#admin
 
-# Sitemaps
+# Prevent crawling of admin routes
+Disallow: /admin
+Disallow: /admin/
+
+# XML Sitemap
 Sitemap: https://theloft.lk/sitemap.xml
