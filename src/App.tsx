@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUp } from 'lucide-react';
 import Header from './components/Header';
@@ -19,6 +20,9 @@ import CareersView from './components/CareersView';
 import ToBeRevealedView from './components/ToBeRevealedView';
 import AdminView from './components/AdminView';
 
+const BASE_URL = 'https://theloft.lk';
+const DEFAULT_OG_IMAGE = `${BASE_URL}/OgImg.png`;
+
 const PAGE_METADATA: Record<string, {
   title: string;
   description: string;
@@ -31,79 +35,83 @@ const PAGE_METADATA: Record<string, {
     description: "Welcome to The Loft by NM in Colombo. Discover an elegant, high-contrast, premium beauty sanctuary offering bespoke hair care, skincare, facial rituals, master nail artistry, and a private ladies' wing.",
     ogTitle: "The Loft by NM | Premium Beauty Sanctuary in Colombo",
     ogDescription: "Bespoke hair care, skincare, facial rituals, and master nail artistry in a serene colonial house at Nugegoda.",
-    ogImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   services: {
     title: "Our Luxury Services | The Loft by NM Colombo",
     description: "Explore our curated rituals: precision couture hair design, professional skincare, expert makeup, and artisanal nail spa treatments delivered by master therapists.",
     ogTitle: "Curated Beauty Rituals | The Loft by NM Services",
     ogDescription: "Precision cuts, skin-redefining facials, and couture aesthetics in our premium Colombo sanctuary.",
-    ogImage: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   menu: {
     title: "Menu & Transparent Pricing | The Loft by NM Nugegoda",
     description: "View our comprehensive menu of premium treatments for Nails, Body, Lashes, Brows, Face, and Hair. Enjoy completely transparent pricing, local VAT-inclusive estimates, and detailed customized services.",
     ogTitle: "Our Ritual Menu & Pricing | The Loft by NM",
     ogDescription: "Bespoke beauty services with clear, transparent pricing. Review our Nails, Body, Lashes, brows, and hair care menu.",
-    ogImage: "https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   gallery: {
     title: "Our Photo Gallery & Experience | The Loft by NM",
     description: "Step inside our tranquil sanctuary. High-definition visuals of our curated interiors, finished couture nail art, and dedicated private ladies' wing.",
     ogTitle: "A Glimpse of Serenity | The Loft by NM Gallery",
     ogDescription: "Explore visual moments of quiet luxury, pristine treatment suites, and precise beauty craftsmanship.",
-    ogImage: "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   about: {
     title: "Our Ethos & Founders | The Loft by NM",
     description: "Learn the story of The Loft by NM. Established in a beautifully renovated colonial house, we prioritize uncompromised clinical hygiene, premium international products, and highly specialized therapists.",
     ogTitle: "Our Story & Sanctuary Pillars | The Loft by NM",
     ogDescription: "A calm, editorial sanctuary in Colombo, built on craftsmanship, rigorous hygiene, and unhurried care.",
-    ogImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   blog: {
     title: "The Journal & Sanctuary Notes | The Loft by NM",
     description: "Read curated thoughts on beauty, technique, and intentional care from the masters at The Loft by NM.",
     ogTitle: "The Journal | The Loft by NM",
     ogDescription: "Curated thoughts on beauty, technique, and intentional care from our Colombo sanctuary.",
-    ogImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   contact: {
     title: "Schedule Your Appointment | The Loft by NM Colombo",
     description: "Find us at Gamsaba Junction, Nugegoda. Book your bespoke beauty session online with immediate WhatsApp confirmation, view opening hours, or check out our comprehensive FAQs.",
     ogTitle: "Reserve Your Sanctuary Hour | The Loft by NM",
     ogDescription: "Use our interactive booking engine, check opening hours, view parking access, or request our private ladies' suite upgrade.",
-    ogImage: "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   'join-us': {
     title: "Join Our Sanctuary Team | Careers at The Loft by NM Colombo",
     description: "Explore career opportunities at The Loft by NM in Colombo. We are seeking passionate Nail Technicians, Hairdressers, Estheticians, and Masseuses for our luxury salon.",
     ogTitle: "Join Our Circle of Masters | The Loft by NM Careers",
     ogDescription: "Flourish in an unhurried, respectful sanctuary with above-market earnings, masterclass training, and private luxury suites.",
-    ogImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   },
   careers: {
     title: "Join Our Sanctuary Team | Careers at The Loft by NM Colombo",
     description: "Explore career opportunities at The Loft by NM in Colombo. We are seeking passionate Nail Technicians, Hairdressers, Estheticians, and Masseuses for our luxury salon.",
     ogTitle: "Join Our Circle of Masters | The Loft by NM Careers",
     ogDescription: "Flourish in an unhurried, respectful sanctuary with above-market earnings, masterclass training, and private luxury suites.",
-    ogImage: "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1000&auto=format&fit=crop"
+    ogImage: DEFAULT_OG_IMAGE
   }
 };
 
-export default function App() {
-  const getInitialPage = () => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace('#', '');
-      const validPages = ['home', 'services', 'menu', 'gallery', 'about', 'blog', 'contact', 'join-us', 'careers', 'admin'];
-      if (validPages.includes(hash)) return hash;
-    }
-    return 'home';
-  };
+// Map URL paths to metadata keys
+function pathToMetaKey(pathname: string): string {
+  const clean = pathname.replace(/^\//, '') || 'home';
+  return clean;
+}
 
-  const [currentPage, setCurrentPage] = useState<string>(getInitialPage);
+export default function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [selectedServiceId, setSelectedServiceId] = useState<string>('');
   const [isPreLaunchMode, setIsPreLaunchMode] = useState<boolean>(() => getSalonLaunchMode() === 'pre-launch');
+  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
+
+  // Derive current page name from URL path
+  const currentPage = pathToMetaKey(location.pathname);
+  const isAdmin = currentPage === 'admin';
 
   // Listen to Launch Mode switch toggled from Admin
   useEffect(() => {
@@ -114,67 +122,46 @@ export default function App() {
     return () => window.removeEventListener('the-loft-launch-mode-changed', handleModeChange);
   }, []);
 
-  // Sync state with URL hash
+  // Scroll to top on route change
   useEffect(() => {
-    window.location.hash = currentPage;
-  }, [currentPage]);
+    window.scrollTo({ top: 0 });
+  }, [location.pathname]);
 
-  // Listen for back/forward navigation
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      const validPages = ['home', 'services', 'menu', 'gallery', 'about', 'blog', 'contact', 'join-us', 'careers', 'admin'];
-      if (validPages.includes(hash) && hash !== currentPage) {
-        setCurrentPage(hash);
-      }
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [currentPage]);
-  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
-
-  // Monitor scroll height to show/hide the Floating Scroll To Top button
+  // Monitor scroll height to show/hide Floating Scroll To Top button
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 300) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
+      setShowScrollTop(window.scrollY > 300);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Smoothly scroll the window context to top
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handle direct booking click from Header, hero, or footer
-  const handleBookClick = () => {
-    setSelectedServiceId(''); // Reset to default consultation
-    setCurrentPage('contact');
+  // Navigation helpers
+  const navigateTo = (page: string) => {
+    const path = page === 'home' ? '/' : `/${page}`;
+    navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handle booking click for a specific treatment from the Menu list
+  const handleBookClick = () => {
+    setSelectedServiceId('');
+    navigateTo('contact');
+  };
+
   const handleBookService = (serviceId: string) => {
     setSelectedServiceId(serviceId);
-    setCurrentPage('contact');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo('contact');
   };
 
-  // Scroll to top on page load to ensure elegant views
-  useEffect(() => {
-    window.scrollTo({ top: 0 });
-  }, []);
-
-  // Retrieve current SEO metadata with safe fallback
+  // SEO metadata
   const meta = PAGE_METADATA[currentPage] || PAGE_METADATA.home;
-  const canonicalUrl = currentPage === 'home' 
-    ? 'https://theloftbynm.com/' 
-    : `https://theloftbynm.com/${currentPage}`;
+  const canonicalUrl = location.pathname === '/'
+    ? `${BASE_URL}/`
+    : `${BASE_URL}${location.pathname}`;
 
   return (
     <div id="app-container" className="min-h-screen flex flex-col bg-ivory text-charcoal selection:bg-gold/30 selection:text-charcoal relative">
@@ -186,7 +173,7 @@ export default function App() {
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
         <link rel="canonical" href={canonicalUrl} />
-        {currentPage === 'admin' && (
+        {isAdmin && (
           <meta name="robots" content="noindex, nofollow" />
         )}
 
@@ -207,10 +194,10 @@ export default function App() {
       </Helmet>
 
       {/* Sticky Premium Header */}
-      {currentPage !== 'admin' && (
+      {!isAdmin && (
         <Header
           currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
+          navigateTo={navigateTo}
           onBookClick={handleBookClick}
         />
       )}
@@ -219,39 +206,40 @@ export default function App() {
       <main id="main-content" className="flex-grow">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentPage}
+            key={location.pathname}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
           >
-              {currentPage === 'home' && (
+            <Routes>
+              <Route path="/" element={
                 <HomeView
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={navigateTo}
                   onBookClick={handleBookClick}
                 />
-              )}
+              } />
 
-              {currentPage === 'services' && (
+              <Route path="/services" element={
                 isPreLaunchMode ? (
                   <ToBeRevealedView
                     type="services"
-                    setCurrentPage={setCurrentPage}
+                    setCurrentPage={navigateTo}
                     onBookClick={handleBookClick}
                   />
                 ) : (
                   <ServicesView
-                    setCurrentPage={setCurrentPage}
+                    setCurrentPage={navigateTo}
                     onBookClick={handleBookClick}
                   />
                 )
-              )}
+              } />
 
-              {currentPage === 'menu' && (
+              <Route path="/menu" element={
                 isPreLaunchMode ? (
                   <ToBeRevealedView
                     type="menu"
-                    setCurrentPage={setCurrentPage}
+                    setCurrentPage={navigateTo}
                     onBookClick={handleBookClick}
                   />
                 ) : (
@@ -259,60 +247,65 @@ export default function App() {
                     onBookService={handleBookService}
                   />
                 )
-              )}
+              } />
 
-              {currentPage === 'gallery' && (
+              <Route path="/gallery" element={
                 <GalleryView
                   onBookClick={handleBookClick}
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={navigateTo}
                 />
-              )}
+              } />
 
-              {currentPage === 'about' && (
+              <Route path="/about" element={
                 <AboutView
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={navigateTo}
                   onBookClick={handleBookClick}
                 />
-              )}
+              } />
 
-              {currentPage === 'blog' && (
+              <Route path="/blog" element={
                 <BlogView
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={navigateTo}
                   onBookClick={handleBookClick}
                 />
-              )}
+              } />
 
-              {currentPage === 'contact' && (
+              <Route path="/contact" element={
                 <ContactView
                   initialServiceId={selectedServiceId}
                   clearInitialServiceId={() => setSelectedServiceId('')}
                 />
-              )}
+              } />
 
-              {(currentPage === 'join-us' || currentPage === 'careers') && (
+              <Route path="/join-us" element={
                 <CareersView
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={navigateTo}
                   onBookClick={handleBookClick}
                 />
-              )}
+              } />
 
-              {currentPage === 'admin' && (
-                <AdminView />
-              )}
+              {/* Legacy /careers alias → redirect to /join-us */}
+              <Route path="/careers" element={<Navigate to="/join-us" replace />} />
+
+              <Route path="/admin" element={<AdminView />} />
+
+              {/* Catch-all: redirect unknown paths to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </motion.div>
         </AnimatePresence>
       </main>
 
       {/* Consistent Luxury Footer */}
-      {currentPage !== 'admin' && (
+      {!isAdmin && (
         <Footer
           currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
+          navigateTo={navigateTo}
         />
       )}
 
       {/* Elegant Floating Scroll-to-Top Button */}
-      {currentPage !== 'admin' && (
+      {!isAdmin && (
         <AnimatePresence>
           {showScrollTop && (
             <motion.button
@@ -338,7 +331,7 @@ export default function App() {
       )}
 
       {/* Elegant Floating WhatsApp Button */}
-      {currentPage !== 'admin' && (
+      {!isAdmin && (
         <a
           href="https://wa.me/94771650650?text=Hello%20The%20Loft%20by%20NM%2C%20I'd%20like%20to%20inquire%20about%20a%20booking."
           target="_blank"
@@ -367,11 +360,10 @@ export default function App() {
       )}
 
       {/* Interactive Coming Soon Pop-up Banner & Floating Reopen Pill */}
-      {currentPage !== 'admin' && (
+      {!isAdmin && (
         <ComingSoonModal
           onNavigate={(page) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            navigateTo(page);
           }}
         />
       )}

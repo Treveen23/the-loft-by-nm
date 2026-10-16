@@ -4,15 +4,14 @@ import nmLogo from '../assets/images/footer.webp';
 
 interface FooterProps {
   currentPage: string;
-  setCurrentPage: (page: string) => void;
+  navigateTo: (page: string) => void;
 }
 
-export default function Footer({ currentPage, setCurrentPage }: FooterProps) {
+export default function Footer({ currentPage, navigateTo }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   const handleLinkClick = (pageId: string) => {
-    setCurrentPage(pageId);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    navigateTo(pageId);
   };
 
   const pages = [
@@ -183,7 +182,7 @@ export default function Footer({ currentPage, setCurrentPage }: FooterProps) {
           <div className="flex flex-wrap justify-center gap-6 font-normal">
             <a href="#privacy" className="hover:text-gold transition-colors">Privacy Policy</a>
             <a href="#terms" className="hover:text-gold transition-colors">Terms of Service</a>
-            <button onClick={() => { setCurrentPage('admin'); window.scrollTo(0, 0); }} className="hover:text-gold transition-colors opacity-30 hover:opacity-100">Admin Login</button>
+            <button onClick={() => navigateTo('admin')} className="hover:text-gold transition-colors opacity-30 hover:opacity-100">Admin Login</button>
           </div>
         </div>
       </div>

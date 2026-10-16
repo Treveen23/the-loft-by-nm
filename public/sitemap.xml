@@ -5,56 +5,56 @@
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <!-- Home Page -->
     <url>
-        <loc>https://theloftbynm.com/</loc>
+        <loc>https://theloft.lk/</loc>
         <lastmod>2026-06-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <!-- Services Page -->
     <url>
-        <loc>https://theloftbynm.com/services</loc>
+        <loc>https://theloft.lk/services</loc>
         <lastmod>2026-06-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <!-- Menu & Pricing Page -->
     <url>
-        <loc>https://theloftbynm.com/menu</loc>
+        <loc>https://theloft.lk/menu</loc>
         <lastmod>2026-06-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <!-- Gallery Page -->
     <url>
-        <loc>https://theloftbynm.com/gallery</loc>
+        <loc>https://theloft.lk/gallery</loc>
         <lastmod>2026-06-27</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <!-- About Page -->
     <url>
-        <loc>https://theloftbynm.com/about</loc>
+        <loc>https://theloft.lk/about</loc>
         <lastmod>2026-06-27</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <!-- Contact & Booking Page -->
     <url>
-        <loc>https://theloftbynm.com/contact</loc>
+        <loc>https://theloft.lk/contact</loc>
         <lastmod>2026-10-09</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <!-- Blog & Journal Page -->
     <url>
-        <loc>https://theloftbynm.com/blog</loc>
+        <loc>https://theloft.lk/blog</loc>
         <lastmod>2026-10-09</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
     <!-- Careers Page -->
     <url>
-        <loc>https://theloftbynm.com/careers</loc>
+        <loc>https://theloft.lk/careers</loc>
         <lastmod>2026-10-09</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>

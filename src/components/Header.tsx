@@ -4,11 +4,11 @@ import nmLogo from '../assets/images/logonew.webp';
 
 interface HeaderProps {
   currentPage: string;
-  setCurrentPage: (page: string) => void;
+  navigateTo: (page: string) => void;
   onBookClick: () => void;
 }
 
-export default function Header({ currentPage, setCurrentPage, onBookClick }: HeaderProps) {
+export default function Header({ currentPage, navigateTo, onBookClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -23,9 +23,8 @@ export default function Header({ currentPage, setCurrentPage, onBookClick }: Hea
   ];
 
   const handleNavClick = (pageId: string) => {
-    setCurrentPage(pageId);
+    navigateTo(pageId);
     setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

@@ -4,8 +4,5 @@ Allow: /
 Disallow: /admin
 Disallow: /#admin
 
-# Host
-Host: https://theloftbynm.com
-
 # Sitemaps
-Sitemap: https://theloftbynm.com/sitemap.xml
+Sitemap: https://theloft.lk/sitemap.xml
