@@ -1,45 +1,28 @@
 
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-    <!-- Homepage -->
-    <url>
-        <loc>https://theloft.lk/</loc>
-    </url>
-
-    <!-- Services -->
-    <url>
-        <loc>https://theloft.lk/services</loc>
-    </url>
-
-    <!-- Menu and Pricing -->
-    <url>
-        <loc>https://theloft.lk/menu</loc>
-    </url>
-
-    <!-- Gallery -->
-    <url>
-        <loc>https://theloft.lk/gallery</loc>
-    </url>
-
-    <!-- About Us -->
-    <url>
-        <loc>https://theloft.lk/about</loc>
-    </url>
-
-    <!-- Contact and Booking -->
-    <url>
-        <loc>https://theloft.lk/contact</loc>
-    </url>
-
-    <!-- Blog and Journal -->
-    <url>
-        <loc>https://theloft.lk/blog</loc>
-    </url>
-
-    <!-- Careers / Join Us -->
-    <url>
-        <loc>https://theloft.lk/careers</loc>
-    </url>
-
+  <url>
+    <loc>https://theloft.lk/</loc>
+  </url>
+  <url>
+    <loc>https://theloft.lk/services</loc>
+  </url>
+  <url>
+    <loc>https://theloft.lk/menu</loc>
+  </url>
+  <url>
+    <loc>https://theloft.lk/gallery</loc>
+  </url>
+  <url>
+    <loc>https://theloft.lk/about</loc>
+  </url>
+  <url>
+    <loc>https://theloft.lk/contact</loc>
+  </url>
+  <url>
+    <loc>https://theloft.lk/blog</loc>
+  </url>
+  <url>
+    <loc>https://theloft.lk/careers</loc>
+  </url>
 </urlset>
