@@ -8,7 +8,7 @@ import Footer from './components/Footer';
 import HomeView from './components/HomeView';
 import ComingSoonModal from './components/ComingSoonModal';
 import { Toaster } from 'sonner';
-import { getSalonLaunchMode } from './api';
+import { getSalonLaunchMode, syncRemoteSiteSettings } from './api';
 
 import ServicesView from './components/ServicesView';
 import MenuView from './components/MenuView';
@@ -112,6 +112,11 @@ export default function App() {
   // Derive current page name from URL path
   const currentPage = pathToMetaKey(location.pathname);
   const isAdmin = currentPage === 'admin';
+
+  // Sync remote settings from Supabase on mount
+  useEffect(() => {
+    syncRemoteSiteSettings();
+  }, []);
 
   // Listen to Launch Mode switch toggled from Admin
   useEffect(() => {

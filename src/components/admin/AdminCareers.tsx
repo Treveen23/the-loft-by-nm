@@ -269,7 +269,12 @@ export default function AdminCareers() {
   };
 
   const handleOpenWhatsAppChat = (app: any) => {
-    const cleanPhone = (app.phone || '').replace(/[^0-9]/g, '');
+    let cleanPhone = (app.phone || '').replace(/[^\d+]/g, '');
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = '94' + cleanPhone.substring(1);
+    } else if (cleanPhone.startsWith('+')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
     const message = encodeURIComponent(
       `Hello ${app.full_name}, thank you for your application for the ${app.position_title} role at The Loft by NM. We reviewed your profile and would love to connect with you.`
     );

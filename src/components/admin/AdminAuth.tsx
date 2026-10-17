@@ -56,7 +56,7 @@ export default function AdminAuth() {
               onChange={e => setEmail(e.target.value)}
               className="w-full text-sm p-3.5 bg-charcoal/5 border border-charcoal/10 text-charcoal rounded-lg focus:border-gold focus:ring-1 focus:ring-gold outline-hidden transition-all placeholder:text-charcoal/20"
               required
-              placeholder="admin@theloft.com"
+              placeholder="admin@theloft.lk"
             />
           </div>
           <div>

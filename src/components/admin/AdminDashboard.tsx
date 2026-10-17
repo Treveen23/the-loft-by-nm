@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Mail, Star, Sparkles, ArrowRight, Briefcase, Crown, Lock, Unlock } from 'lucide-react';
+import { Calendar, Mail, Star, Sparkles, ArrowRight, Briefcase, Crown, Lock, Unlock, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchBookings, fetchContacts, fetchReviews, fetchServices, fetchVipWaitlist, getSalonLaunchMode, setSalonLaunchMode } from '../../api';
+import { fetchBookings, fetchContacts, fetchReviews, fetchServices, fetchVipWaitlist, getSalonLaunchMode, setSalonLaunchMode, getTestimonialsVisibility, setTestimonialsVisibility } from '../../api';
 import AdminSkeleton from './AdminSkeleton';
 
 interface AdminDashboardProps {
@@ -20,6 +20,15 @@ export default function AdminDashboard({ setActiveTab }: AdminDashboardProps) {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [launchMode, setLaunchMode] = useState<'pre-launch' | 'live'>(getSalonLaunchMode);
+  const [testimonialsVisible, setTestimonialsVisible] = useState<boolean>(getTestimonialsVisibility);
+
+  useEffect(() => {
+    const handleTestimonialsChange = (e: any) => {
+      setTestimonialsVisible(Boolean(e.detail));
+    };
+    window.addEventListener('the-loft-testimonials-visibility-changed', handleTestimonialsChange);
+    return () => window.removeEventListener('the-loft-testimonials-visibility-changed', handleTestimonialsChange);
+  }, []);
 
   const handleToggleLaunchMode = async () => {
     const nextMode = launchMode === 'pre-launch' ? 'live' : 'pre-launch';
@@ -31,6 +40,23 @@ export default function AdminDashboard({ setActiveTab }: AdminDashboardProps) {
       await setSalonLaunchMode(nextMode);
       setLaunchMode(nextMode);
       toast.success(nextMode === 'live' ? 'Salon Website is now LIVE to the public!' : 'Website returned to Pre-Launch Teaser Mode');
+    }
+  };
+
+  const handleToggleTestimonials = async () => {
+    const nextVisible = !testimonialsVisible;
+    const confirmMsg = nextVisible
+      ? 'Are you ready to reveal testimonials and client reviews on the Homepage and About page?'
+      : 'Do you want to hide testimonials and client reviews from the Homepage and About page?';
+
+    if (window.confirm(confirmMsg)) {
+      await setTestimonialsVisibility(nextVisible);
+      setTestimonialsVisible(nextVisible);
+      toast.success(
+        nextVisible
+          ? 'Testimonials are now LIVE on Homepage & About page!'
+          : 'Testimonials are now HIDDEN from Homepage & About page'
+      );
     }
   };
 
@@ -97,62 +123,125 @@ export default function AdminDashboard({ setActiveTab }: AdminDashboardProps) {
         </div>
       </header>
 
-      {/* Salon Website Launch Controller Banner */}
-      <div className={`p-6 sm:p-8 rounded-[2rem] border transition-all duration-500 relative overflow-hidden shadow-sm ${
-        launchMode === 'pre-launch'
-          ? 'bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-white border-amber-500/30'
-          : 'bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-white border-emerald-500/30'
-      }`}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start sm:items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
-              launchMode === 'pre-launch' ? 'bg-amber-500 text-charcoal' : 'bg-emerald-500 text-white'
-            }`}>
-              {launchMode === 'pre-launch' ? <Lock size={24} /> : <Unlock size={24} />}
-            </div>
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${
-                  launchMode === 'pre-launch'
-                    ? 'bg-amber-100 text-amber-900 border-amber-300'
-                    : 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                }`}>
-                  {launchMode === 'pre-launch' ? '● Pre-Launch Teaser Mode' : '● Live Grand Opening Mode'}
-                </span>
-                <span className="text-[10px] text-charcoal/50 uppercase tracking-wider font-mono">Website Controller</span>
+      {/* Salon Website Launch & Content Controllers Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* 1. Website Launch Controller Banner */}
+        <div className={`p-6 sm:p-8 rounded-[2rem] border transition-all duration-500 relative overflow-hidden shadow-sm flex flex-col justify-between ${
+          launchMode === 'pre-launch'
+            ? 'bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white border-amber-500/30'
+            : 'bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-white border-emerald-500/30'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                launchMode === 'pre-launch' ? 'bg-amber-500 text-charcoal' : 'bg-emerald-500 text-white'
+              }`}>
+                {launchMode === 'pre-launch' ? <Lock size={24} /> : <Unlock size={24} />}
               </div>
-              <h3 className="font-serif text-xl sm:text-2xl text-charcoal">
-                {launchMode === 'pre-launch' ? 'Services & Prices are Hidden' : 'Full Services & Menu are Live to Public'}
-              </h3>
-              <p className="text-xs text-charcoal/70 font-sans max-w-xl leading-relaxed">
-                {launchMode === 'pre-launch'
-                  ? 'Guests visiting Services and Menu will see your "To Be Revealed" page with the VIP waitlist. Click the button to switch live on opening day!'
-                  : 'Visitors can now freely view all treatment rituals, transparent prices, and book online.'}
-              </p>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${
+                    launchMode === 'pre-launch'
+                      ? 'bg-amber-100 text-amber-900 border-amber-300'
+                      : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                  }`}>
+                    {launchMode === 'pre-launch' ? '● Pre-Launch Teaser Mode' : '● Live Grand Opening Mode'}
+                  </span>
+                  <span className="text-[10px] text-charcoal/50 uppercase tracking-wider font-mono">Website Controller</span>
+                </div>
+                <h3 className="font-serif text-xl sm:text-2xl text-charcoal">
+                  {launchMode === 'pre-launch' ? 'Services & Prices are Hidden' : 'Services & Menu are Live to Public'}
+                </h3>
+                <p className="text-xs text-charcoal/70 font-sans max-w-xl leading-relaxed">
+                  {launchMode === 'pre-launch'
+                    ? 'Guests visiting Services and Menu will see your "To Be Revealed" page with the VIP waitlist.'
+                    : 'Visitors can now freely view all treatment rituals, transparent prices, and book online.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={handleToggleLaunchMode}
+                className={`px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer shadow-md flex items-center gap-2 ${
+                  launchMode === 'pre-launch'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 hover:scale-105'
+                    : 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20 hover:scale-105'
+                }`}
+              >
+                {launchMode === 'pre-launch' ? (
+                  <>
+                    <Unlock size={15} />
+                    <span>Switch to Live</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock size={15} />
+                    <span>Switch to Teaser</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={handleToggleLaunchMode}
-              className={`px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer shadow-md flex items-center gap-2 ${
-                launchMode === 'pre-launch'
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 hover:scale-105'
-                  : 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20 hover:scale-105'
-              }`}
-            >
-              {launchMode === 'pre-launch' ? (
-                <>
-                  <Unlock size={15} />
-                  <span>Switch Website to Live Mode</span>
-                </>
-              ) : (
-                <>
-                  <Lock size={15} />
-                  <span>Switch to Pre-Launch Teaser</span>
-                </>
-              )}
-            </button>
+        {/* 2. Testimonials Visibility Controller Banner */}
+        <div className={`p-6 sm:p-8 rounded-[2rem] border transition-all duration-500 relative overflow-hidden shadow-sm flex flex-col justify-between ${
+          !testimonialsVisible
+            ? 'bg-gradient-to-br from-charcoal/10 via-charcoal/5 to-white border-charcoal/20'
+            : 'bg-gradient-to-br from-gold/15 via-gold/5 to-white border-gold/40'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-start sm:items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                !testimonialsVisible ? 'bg-charcoal text-white' : 'bg-gold text-charcoal'
+              }`}>
+                {!testimonialsVisible ? <EyeOff size={24} /> : <Eye size={24} />}
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${
+                    !testimonialsVisible
+                      ? 'bg-charcoal/10 text-charcoal border-charcoal/20'
+                      : 'bg-gold/20 text-charcoal border-gold/40'
+                  }`}>
+                    {!testimonialsVisible ? '● Hidden from Home & About' : '● Live on Home & About'}
+                  </span>
+                  <span className="text-[10px] text-charcoal/50 uppercase tracking-wider font-mono">Testimonials Controller</span>
+                </div>
+                <h3 className="font-serif text-xl sm:text-2xl text-charcoal">
+                  {!testimonialsVisible ? 'Testimonials are Hidden' : 'Testimonials are Live to Public'}
+                </h3>
+                <p className="text-xs text-charcoal/70 font-sans max-w-xl leading-relaxed">
+                  {!testimonialsVisible
+                    ? 'Client review sections are collapsed on Home & About. Click Reveal whenever you are ready.'
+                    : 'Visitors can read verified client experiences and review ratings on both Home & About pages.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={handleToggleTestimonials}
+                className={`px-6 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 cursor-pointer shadow-md flex items-center gap-2 ${
+                  !testimonialsVisible
+                    ? 'bg-gold hover:bg-white text-black border border-gold/40 shadow-gold/20 hover:scale-105'
+                    : 'bg-charcoal hover:bg-amber-600 text-white shadow-charcoal/20 hover:scale-105'
+                }`}
+              >
+                {!testimonialsVisible ? (
+                  <>
+                    <Eye size={15} />
+                    <span>Reveal Testimonials</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff size={15} />
+                    <span>Hide Testimonials</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
