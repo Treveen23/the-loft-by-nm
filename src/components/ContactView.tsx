@@ -633,56 +633,89 @@ Please confirm my reservation. Looking forward to my session!`;
           {/* Right Side (How to Find Us) */}
           <div
             id="find-us-column"
-            className="flex flex-col justify-between space-y-8 text-left"
+            className="flex flex-col gap-6 text-left"
           >
 
             {/* By Car & Parking */}
-            <div className="group bg-white/80 backdrop-blur-sm border border-white p-8 rounded-2xl space-y-5 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-12px_rgba(212,175,55,0.1)] transition-all duration-500 hover:-translate-y-1">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-charcoal/5 flex items-center justify-center text-charcoal group-hover:bg-gold group-hover:text-white transition-colors duration-500">
-                  <Car size={20} />
+            <div className="group bg-white/80 backdrop-blur-md border border-white p-6 sm:p-7 rounded-2xl shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-12px_rgba(212,175,55,0.1)] transition-all duration-500 hover:-translate-y-1">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-charcoal/5 flex items-center justify-center text-charcoal group-hover:bg-gold group-hover:text-white transition-colors duration-500 shrink-0">
+                  <Car size={22} />
                 </div>
-                <h3 className="font-serif text-2xl text-charcoal">By Car & Parking</h3>
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-serif text-xl sm:text-2xl text-charcoal">By Car & Parking</h3>
+                    <span className="text-[10px] font-bold tracking-wider uppercase text-gold bg-gold/10 px-2.5 py-1 rounded-full shrink-0">
+                      Free On-Site
+                    </span>
+                  </div>
+                  <p className="font-sans text-sm text-charcoal/70 leading-relaxed font-light">
+                    Parking is readily available on-site and on the street. We also provide secure, reserved basement parking for our clients.
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {["On-Site Bays", "Secure Basement", "Street Parking"].map((badge, idx) => (
+                      <span key={idx} className="text-[10px] font-medium text-charcoal/60 bg-charcoal/[0.03] border border-charcoal/10 px-2.5 py-1 rounded-md">
+                        ✓ {badge}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
-                          <p className="font-sans text-sm text-charcoal/70 leading-[1.7] font-light pl-16">
-                              Parking is available on-site and on the street. We also have secure basement parking for clients. 
-                          </p>
             </div>
 
-            {/* WhatsApp Link CTA */}
-            <div className="group bg-white/80 backdrop-blur-sm border border-white p-8 rounded-2xl space-y-5 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-12px_rgba(16,185,129,0.15)] transition-all duration-500 hover:-translate-y-1">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-500">
-                  <MessageCircle size={20} />
+            {/* WhatsApp Direct CTA */}
+            <div className="group bg-white/80 backdrop-blur-md border border-white p-6 sm:p-7 rounded-2xl shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-12px_rgba(16,185,129,0.15)] transition-all duration-500 hover:-translate-y-1">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-500 shrink-0">
+                  <MessageCircle size={22} />
                 </div>
-                <h3 className="font-serif text-2xl text-charcoal">WhatsApp Direct</h3>
+                <div className="space-y-3 flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-serif text-xl sm:text-2xl text-charcoal">WhatsApp Direct</h3>
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-emerald-700 bg-emerald-500/10 px-2.5 py-1 rounded-full shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Active Now
+                    </span>
+                  </div>
+                  <p className="font-sans text-sm text-charcoal/70 leading-relaxed font-light">
+                    Message us directly to confirm your booking, ask a question, or request a specific therapist. We usually reply within minutes.
+                  </p>
+                  <div className="pt-1">
+                    <a
+                      id="whatsapp-link-btn"
+                      href="https://wa.me/94771650650?text=Hello%20The%20Loft%20by%20NM%2C%20I'd%20like%20to%20ask%20about%20booking%20an%20appointment."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-[11px] sm:text-xs font-bold tracking-widest uppercase py-3.5 px-6 rounded-full shadow-md shadow-emerald-500/25 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/35"
+                    >
+                      <MessageSquare size={15} className="fill-white/20" />
+                      <span>Message on WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
               </div>
-              <p className="font-sans text-sm text-charcoal/70 leading-[1.7] font-light pl-16 mb-2">
-                Message us directly to confirm your booking, ask a question or request a specific therapist. We usually reply within minutes.
-              </p>
-              <div className="pl-16">
+            </div>
+
+            {/* Embedded Google Map Card */}
+            <div className="bg-white/80 backdrop-blur-md border border-white p-6 sm:p-7 rounded-2xl shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] flex-1 flex flex-col justify-between space-y-4 hover:shadow-[0_20px_40px_-12px_rgba(212,175,55,0.1)] transition-all duration-500">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+                  <span className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-charcoal/70 uppercase font-sans">Interactive Location Map</span>
+                </div>
                 <a
-                  id="whatsapp-link-btn"
-                  href="https://wa.me/94771650650?text=Hello%20The%20Loft%20by%20NM%2C%20I'd%20like%20to%20ask%20about%20booking%20an%20appointment."
+                  href="https://maps.google.com/?q=Gamsaba+Junction+Nugegoda"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase py-4 px-8 rounded-full shadow-lg shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-emerald-500/40"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-bold tracking-wider uppercase text-gold hover:text-gold-hover transition-colors group/link"
                 >
-                  <MessageSquare size={16} className="fill-white/20" />
-                  <span>Message on WhatsApp</span>
+                  <span>Open in Maps</span>
+                  <ExternalLink size={12} className="group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 transition-transform" />
                 </a>
-              </div>
-            </div>
-
-            {/* Embedded Google Map Placeholder */}
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center gap-2 px-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-gold" />
-                <span className="text-[10px] font-bold tracking-[0.2em] text-charcoal/60 uppercase font-sans">Interactive Location Map</span>
               </div>
               <div
                 id="embedded-map-container"
-                className="relative h-64 sm:h-72 w-full bg-charcoal/5 rounded-2xl overflow-hidden shadow-md group"
+                className="relative flex-1 min-h-[220px] sm:min-h-[250px] w-full bg-charcoal/5 rounded-xl overflow-hidden shadow-inner group border border-charcoal/5"
               >
                 {/* Genuine highly responsive embedded Google Maps iframe centered at Gamsaba Junction, Nugegoda */}
                 <iframe
@@ -694,10 +727,17 @@ Please confirm my reservation. Looking forward to my session!`;
                   allowFullScreen={false}
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  className="filter grayscale-[60%] contrast-110 group-hover:grayscale-0 transition-all duration-1000"
+                  className="filter grayscale-[50%] contrast-105 group-hover:grayscale-0 transition-all duration-1000 w-full h-full"
                 />
                 {/* Subtle inner shadow for premium feel */}
-                <div className="absolute inset-0 pointer-events-none rounded-2xl shadow-[inset_0_0_20px_rgba(0,0,0,0.1)]" />
+                <div className="absolute inset-0 pointer-events-none rounded-xl shadow-[inset_0_0_20px_rgba(0,0,0,0.06)]" />
+              </div>
+              <div className="flex items-center justify-between text-xs text-charcoal/60 font-light pt-1">
+                <span className="flex items-center gap-1.5">
+                  <MapPin size={13} className="text-gold" />
+                  Gamsaba Junction, Nugegoda
+                </span>
+                <span className="text-[11px] font-mono text-gold font-medium">Colombo Sanctuary</span>
               </div>
             </div>
 
