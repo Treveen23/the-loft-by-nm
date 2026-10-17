@@ -5,20 +5,23 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowUp } from 'lucide-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import HomeView from './components/HomeView';
 import ComingSoonModal from './components/ComingSoonModal';
 import { Toaster } from 'sonner';
 import { getSalonLaunchMode, syncRemoteSiteSettings } from './api';
 
-import ServicesView from './components/ServicesView';
-import MenuView from './components/MenuView';
-import GalleryView from './components/GalleryView';
-import AboutView from './components/AboutView';
-import ContactView from './components/ContactView';
-import BlogView from './components/BlogView';
-import CareersView from './components/CareersView';
-import ToBeRevealedView from './components/ToBeRevealedView';
-import AdminView from './components/AdminView';
+// Eagerly loaded for instant LCP & FCP on the home route
+import HomeView from './components/HomeView';
+
+// Code-split secondary routes for rapid initial page load
+const ServicesView = React.lazy(() => import('./components/ServicesView'));
+const MenuView = React.lazy(() => import('./components/MenuView'));
+const GalleryView = React.lazy(() => import('./components/GalleryView'));
+const AboutView = React.lazy(() => import('./components/AboutView'));
+const ContactView = React.lazy(() => import('./components/ContactView'));
+const BlogView = React.lazy(() => import('./components/BlogView'));
+const CareersView = React.lazy(() => import('./components/CareersView'));
+const ToBeRevealedView = React.lazy(() => import('./components/ToBeRevealedView'));
+const AdminView = React.lazy(() => import('./components/AdminView'));
 
 const BASE_URL = 'https://theloft.lk';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/OgImg.png`;
@@ -217,86 +220,92 @@ export default function App() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
           >
-            <Routes>
-              <Route path="/" element={
-                <HomeView
-                  setCurrentPage={navigateTo}
-                  onBookClick={handleBookClick}
-                />
-              } />
-
-              <Route path="/services" element={
-                isPreLaunchMode ? (
-                  <ToBeRevealedView
-                    type="services"
+            <React.Suspense fallback={
+              <div className="min-h-[50vh] flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full border-2 border-gold/20 border-t-gold animate-spin" />
+              </div>
+            }>
+              <Routes>
+                <Route path="/" element={
+                  <HomeView
                     setCurrentPage={navigateTo}
                     onBookClick={handleBookClick}
                   />
-                ) : (
-                  <ServicesView
+                } />
+
+                <Route path="/services" element={
+                  isPreLaunchMode ? (
+                    <ToBeRevealedView
+                      type="services"
+                      setCurrentPage={navigateTo}
+                      onBookClick={handleBookClick}
+                    />
+                  ) : (
+                    <ServicesView
+                      setCurrentPage={navigateTo}
+                      onBookClick={handleBookClick}
+                    />
+                  )
+                } />
+
+                <Route path="/menu" element={
+                  isPreLaunchMode ? (
+                    <ToBeRevealedView
+                      type="menu"
+                      setCurrentPage={navigateTo}
+                      onBookClick={handleBookClick}
+                    />
+                  ) : (
+                    <MenuView
+                      onBookService={handleBookService}
+                    />
+                  )
+                } />
+
+                <Route path="/gallery" element={
+                  <GalleryView
+                    onBookClick={handleBookClick}
+                    setCurrentPage={navigateTo}
+                  />
+                } />
+
+                <Route path="/about" element={
+                  <AboutView
                     setCurrentPage={navigateTo}
                     onBookClick={handleBookClick}
                   />
-                )
-              } />
+                } />
 
-              <Route path="/menu" element={
-                isPreLaunchMode ? (
-                  <ToBeRevealedView
-                    type="menu"
+                <Route path="/blog" element={
+                  <BlogView
                     setCurrentPage={navigateTo}
                     onBookClick={handleBookClick}
                   />
-                ) : (
-                  <MenuView
-                    onBookService={handleBookService}
+                } />
+
+                <Route path="/contact" element={
+                  <ContactView
+                    initialServiceId={selectedServiceId}
+                    clearInitialServiceId={() => setSelectedServiceId('')}
                   />
-                )
-              } />
+                } />
 
-              <Route path="/gallery" element={
-                <GalleryView
-                  onBookClick={handleBookClick}
-                  setCurrentPage={navigateTo}
-                />
-              } />
+                <Route path="/join-us" element={
+                  <CareersView
+                    setCurrentPage={navigateTo}
+                    onBookClick={handleBookClick}
+                  />
+                } />
 
-              <Route path="/about" element={
-                <AboutView
-                  setCurrentPage={navigateTo}
-                  onBookClick={handleBookClick}
-                />
-              } />
+                {/* Legacy /careers alias → redirect to /join-us */}
+                <Route path="/careers" element={<Navigate to="/join-us" replace />} />
 
-              <Route path="/blog" element={
-                <BlogView
-                  setCurrentPage={navigateTo}
-                  onBookClick={handleBookClick}
-                />
-              } />
+                <Route path="/admin" element={<AdminView />} />
 
-              <Route path="/contact" element={
-                <ContactView
-                  initialServiceId={selectedServiceId}
-                  clearInitialServiceId={() => setSelectedServiceId('')}
-                />
-              } />
-
-              <Route path="/join-us" element={
-                <CareersView
-                  setCurrentPage={navigateTo}
-                  onBookClick={handleBookClick}
-                />
-              } />
-
-              {/* Legacy /careers alias → redirect to /join-us */}
-              <Route path="/careers" element={<Navigate to="/join-us" replace />} />
-
-              <Route path="/admin" element={<AdminView />} />
-
-              {/* Catch-all: redirect unknown paths to home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                {/* Catch-all: redirect unknown paths to home */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </React.Suspense>
           </motion.div>
         </AnimatePresence>
       </main>
