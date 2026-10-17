@@ -264,7 +264,8 @@ Private Ladies' Suite: ${bookingSuccess.privateSuite ? 'Yes (Reserved)' : 'Main 
 Estimated Total: Rs. ${Number(bookingSuccess.servicePrice || 0).toLocaleString()}
 
 Address: Gamsaba Junction, Nugegoda, Colombo, Sri Lanka
-Concierge Desk: +94 771 650 650`;
+Concierge Desk / WhatsApp: +94 771 650 650
+Official Email: info@theloft.lk`;
 
     navigator.clipboard.writeText(text);
     setIsTicketCopied(true);
@@ -354,12 +355,12 @@ Please confirm my reservation. Looking forward to my session!`;
         'CALSCALE:GREGORIAN',
         'METHOD:PUBLISH',
         'BEGIN:VEVENT',
-        `UID:${item.code}-${Date.now()}@theloftbynm.com`,
+        `UID:${item.code}-${Date.now()}@theloft.lk`,
         `DTSTAMP:${formatIcs(new Date())}Z`,
         `DTSTART:${formatIcs(start)}`,
         `DTEND:${formatIcs(end)}`,
         `SUMMARY:The Loft by NM - ${item.serviceName}`,
-        `DESCRIPTION:Ticket: ${item.code}\\nGuest: ${item.name}\\nTherapy: ${item.serviceName}\\nPrivate Suite: ${item.privateSuite ? 'Yes' : 'No'}\\nPhone: +94 771 650 650`,
+        `DESCRIPTION:Ticket: ${item.code}\\nGuest: ${item.name}\\nTherapy: ${item.serviceName}\\nPrivate Suite: ${item.privateSuite ? 'Yes' : 'No'}\\nPhone & WhatsApp: +94 771 650 650\\nEmail: info@theloft.lk`,
         'LOCATION:The Loft by NM, Gamsaba Junction, Nugegoda, Colombo, Sri Lanka',
         'STATUS:CONFIRMED',
         'END:VEVENT',
@@ -542,6 +543,54 @@ Please confirm my reservation. Looking forward to my session!`;
                       </>
                     )}
                   </button>
+                </div>
+              </div>
+
+              {/* Direct Concierge & WhatsApp */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-charcoal">
+                  <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-white transition-colors duration-300">
+                    <Phone size={18} />
+                  </div>
+                  <span className="text-sm font-bold tracking-widest uppercase font-sans">Phone & WhatsApp</span>
+                </div>
+                <div className="pl-13 space-y-2">
+                  <a
+                    href="tel:+94771650650"
+                    className="block font-sans text-base text-charcoal/90 font-medium hover:text-gold transition-colors"
+                  >
+                    +94 771 650 650
+                  </a>
+                  <a
+                    href="https://wa.me/94771650650?text=Hello%20The%20Loft%20by%20NM%2C%20I'd%20like%20to%20inquire%20about%20your%20services."
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-xs text-emerald-700 hover:text-emerald-800 font-semibold"
+                  >
+                    <MessageSquare size={13} />
+                    <span>Message Concierge on WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Official Web & Inquiries Email */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 text-charcoal">
+                  <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center text-gold group-hover:bg-gold group-hover:text-white transition-colors duration-300">
+                    <Mail size={18} />
+                  </div>
+                  <span className="text-sm font-bold tracking-widest uppercase font-sans">Official Email</span>
+                </div>
+                <div className="pl-13 space-y-1">
+                  <a
+                    href="mailto:info@theloft.lk"
+                    className="block font-sans text-base text-charcoal/90 font-medium hover:text-gold transition-colors"
+                  >
+                    info@theloft.lk
+                  </a>
+                  <p className="text-xs text-charcoal/60 font-light">
+                    For all appointment bookings, bespoke inquiries & media.
+                  </p>
                 </div>
               </div>
 
@@ -884,15 +933,26 @@ Please confirm my reservation. Looking forward to my session!`;
               <div className="space-y-4">
                 <h3 className="font-serif text-3xl sm:text-4xl text-charcoal">Message Transmitted</h3>
                 <p className="text-base font-sans font-light text-charcoal/70 max-w-lg mx-auto leading-relaxed">
-                  Your inquiry has been logged in our luxury dispatch pipeline. A senior coordinator from our desk will reach out to you shortly.
+                  Your inquiry has been logged and routed to <strong className="text-charcoal font-medium">info@theloft.lk</strong>. A senior coordinator from our concierge team will reach out to you shortly.
                 </p>
               </div>
-              <button
-                onClick={() => setContactSuccess(false)}
-                className="mt-8 font-sans text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase bg-charcoal text-ivory py-4 px-10 rounded-full hover:bg-gold hover:shadow-lg transition-all duration-300 cursor-pointer"
-              >
-                Send Another Message
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <a
+                  href="https://wa.me/94771650650?text=Hello%20The%20Loft%20by%20NM%2C%20I%20just%20sent%20an%20inquiry%20via%20your%20website%20and%20would%20like%20to%20connect."
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full sm:w-auto px-7 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-sans text-xs tracking-wider uppercase font-semibold rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <MessageSquare size={14} />
+                  <span>Connect on WhatsApp</span>
+                </a>
+                <button
+                  onClick={() => setContactSuccess(false)}
+                  className="w-full sm:w-auto font-sans text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase bg-charcoal text-ivory py-3.5 px-8 rounded-full hover:bg-gold hover:text-charcoal hover:shadow-lg transition-all duration-300 cursor-pointer"
+                >
+                  Send Another Message
+                </button>
+              </div>
             </div>
           ) : (
             /* Form Fields and Tabs */

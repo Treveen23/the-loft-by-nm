@@ -27,7 +27,9 @@ import {
   Mail,
   Copy,
   Paperclip,
-  X
+  X,
+  Phone,
+  MessageSquare
 } from 'lucide-react';
 import { DEFAULT_CAREER_POSITIONS, IMAGES } from '../data';
 import { CareerPosition, CareerApplicationForm } from '../types';
@@ -313,9 +315,18 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
             );
 
         const mailtoUrl =
-            `mailto:hello@theloftbynm.com?subject=${subject}&body=${body}`;
+            `mailto:info@theloft.lk?subject=${subject}&body=${body}`;
 
         window.location.href = mailtoUrl;
+    };
+
+    const handleOpenWhatsAppClient = (
+        cvDirectUrl?: string | null
+    ) => {
+        const text = encodeURIComponent(
+            `Hello The Loft by NM! I have submitted a career application for the ${form.positionTitle} position.\n\nCandidate: ${form.fullName}\nPhone: ${form.phone}\nEmail: ${form.email || 'N/A'}${cvDirectUrl ? `\nCV Link: ${cvDirectUrl}` : ''}\n\nI look forward to connecting with your talent team!`
+        );
+        window.open(`https://wa.me/94771650650?text=${text}`, '_blank');
     };
 
 
@@ -836,7 +847,7 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
                                       <Mail size={15} className="text-gold" />
 
                                       <span>
-                                          Direct Email to: hello@theloftbynm.com
+                                          Direct Email to: info@theloft.lk
                                       </span>
                                   </div>
 
@@ -870,7 +881,7 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
 
                               </div>
 
-                              {/* Email Buttons */}
+                              {/* Action Buttons */}
                               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
 
                                   {/* Send Email */}
@@ -882,7 +893,20 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
                                       <Mail size={15} />
 
                                       <span>
-                                          Send Email
+                                          Send Email (info@theloft.lk)
+                                      </span>
+                                  </button>
+
+                                  {/* WhatsApp Fast-track */}
+                                  <button
+                                      type="button"
+                                      onClick={() => handleOpenWhatsAppClient(uploadedCvUrl)}
+                                      className="w-full sm:w-auto px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-sans text-xs tracking-wider uppercase font-semibold rounded-full shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                  >
+                                      <MessageSquare size={15} />
+
+                                      <span>
+                                          WhatsApp Concierge
                                       </span>
                                   </button>
 
@@ -895,7 +919,7 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
                                       <Copy size={14} />
 
                                       <span>
-                                          Copy Email Text
+                                          Copy Email
                                       </span>
                                   </button>
 
@@ -1257,7 +1281,7 @@ export default function CareersView({ setCurrentPage, onBookClick }: CareersView
                                                   Your CV will be included with your application
                                                   email to{" "}
                                                   <strong>
-                                                      hello@theloftbynm.com
+                                                      info@theloft.lk
                                                   </strong>
                                               </p>
 

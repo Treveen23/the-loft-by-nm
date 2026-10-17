@@ -135,8 +135,8 @@ export default function Footer({ currentPage, navigateTo }: FooterProps) {
               </li>
               <li className="flex items-center gap-4 group">
                 <Mail size={16} className="text-gold shrink-0 group-hover:scale-110 transition-transform" />
-                <a href="mailto:appointments@theloftbynm.com" className="hover:text-gold transition-colors">
-                  hello@theloftbynm.com
+                <a href="mailto:info@theloft.lk" className="hover:text-gold transition-colors">
+                  info@theloft.lk
                 </a>
               </li>
             </ul>

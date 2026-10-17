@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Plus, X, Check, Edit } from 'lucide-react';
+import { Star, Plus, X, Check, Edit, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { fetchReviews, createReview, updateReviewStatus, updateReview, deleteReview } from '../../api';
+import { fetchReviews, createReview, updateReviewStatus, updateReview, deleteReview, getTestimonialsVisibility, setTestimonialsVisibility } from '../../api';
 import AdminSkeleton from './AdminSkeleton';
 
 export default function AdminReviews() {
@@ -12,6 +12,26 @@ export default function AdminReviews() {
     name: '', role: '', service_name: '', rating: 5, comment: '', status: 'approved'
   });
   const [loading, setLoading] = useState(true);
+  const [testimonialsVisible, setTestimonialsVisible] = useState<boolean>(getTestimonialsVisibility);
+
+  useEffect(() => {
+    const handleTestimonialsChange = (e: any) => {
+      setTestimonialsVisible(Boolean(e.detail));
+    };
+    window.addEventListener('the-loft-testimonials-visibility-changed', handleTestimonialsChange);
+    return () => window.removeEventListener('the-loft-testimonials-visibility-changed', handleTestimonialsChange);
+  }, []);
+
+  const handleToggleTestimonials = async () => {
+    const nextVisible = !testimonialsVisible;
+    await setTestimonialsVisibility(nextVisible);
+    setTestimonialsVisible(nextVisible);
+    toast.success(
+      nextVisible
+        ? 'Testimonials are now visible on Homepage and About page!'
+        : 'Testimonials are now hidden from Homepage and About page.'
+    );
+  };
 
   useEffect(() => {
     loadData();
@@ -66,14 +86,79 @@ export default function AdminReviews() {
             Moderate feedback and showcase glowing testimonials from your clientele.
           </p>
         </div>
-        <button onClick={() => {
-          setEditingReviewId(null);
-          setReviewForm({ name: '', role: '', service_name: '', rating: 5, comment: '', status: 'approved' });
-          setIsReviewFormOpen(true);
-        }} className="relative z-10 flex items-center gap-2 bg-gold hover:bg-white text-black px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md">
-          <Plus size={16} /> Add Testimonial
-        </button>
+        <div className="flex flex-wrap items-center gap-3 relative z-10">
+          <button
+            onClick={handleToggleTestimonials}
+            className={`flex items-center gap-2 px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer border ${
+              testimonialsVisible
+                ? 'bg-white border-amber-400 text-amber-800 hover:bg-amber-50'
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+            }`}
+          >
+            {testimonialsVisible ? (
+              <>
+                <EyeOff size={16} />
+                <span>Hide from Website</span>
+              </>
+            ) : (
+              <>
+                <Eye size={16} />
+                <span>Reveal on Website</span>
+              </>
+            )}
+          </button>
+
+          <button onClick={() => {
+            setEditingReviewId(null);
+            setReviewForm({ name: '', role: '', service_name: '', rating: 5, comment: '', status: 'approved' });
+            setIsReviewFormOpen(true);
+          }} className="flex items-center gap-2 bg-gold hover:bg-white text-black px-6 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-md cursor-pointer">
+            <Plus size={16} /> Add Testimonial
+          </button>
+        </div>
       </header>
+
+      {/* Testimonials Public Status Banner */}
+      <div className={`p-5 rounded-2xl border mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300 ${
+        testimonialsVisible
+          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-950'
+          : 'bg-amber-500/10 border-amber-500/30 text-amber-950'
+      }`}>
+        <div className="flex items-center gap-4">
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-sm ${
+            testimonialsVisible ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-charcoal'
+          }`}>
+            {testimonialsVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${
+                testimonialsVisible
+                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                  : 'bg-amber-100 text-amber-900 border-amber-300'
+              }`}>
+                {testimonialsVisible ? '● Live on Homepage & About' : '● Hidden from Homepage & About'}
+              </span>
+            </div>
+            <p className="text-xs font-sans mt-1 text-charcoal/80">
+              {testimonialsVisible
+                ? 'Client reviews and ratings are currently visible to visitors across both Home and About pages.'
+                : 'The testimonials section is currently hidden from public view. Guests cannot see reviews until revealed.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleToggleTestimonials}
+          className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 shrink-0 cursor-pointer shadow-sm ${
+            testimonialsVisible
+              ? 'bg-charcoal hover:bg-amber-600 text-white'
+              : 'bg-gold hover:bg-white text-black border border-gold/40'
+          }`}
+        >
+          {testimonialsVisible ? 'Hide Testimonials' : 'Reveal Testimonials'}
+        </button>
+      </div>
 
       {isReviewFormOpen && (
         <div className="mb-10 bg-white border border-charcoal/10 p-8 rounded-2xl shadow-2xl relative overflow-hidden animate-fadeIn">

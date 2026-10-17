@@ -377,7 +377,7 @@ export const createCareerApplication = async (application: any) => {
       await supabase.from('contacts').insert([{
         name: fullName,
         phone: phone,
-        email: email || 'careers@theloftbynm.com',
+        email: email || 'info@theloft.lk',
         subject: `Career Application: ${positionTitle}`,
         message: `Candidate application for ${positionTitle}.\nCandidate: ${fullName}\nPhone: ${phone}\nEmail: ${email || 'None'}\nAge: ${age || 'N/A'}\nGender: ${gender || 'N/A'}\nCV: ${cvUrl || 'None'}`,
         status: 'unread'
@@ -466,7 +466,7 @@ export const fetchCareerApplications = async () => {
               id: c.id,
               full_name: c.name,
               phone: c.phone,
-              email: c.email && !c.email.includes('theloftbynm.com') ? c.email : '',
+              email: c.email && !c.email.includes('theloftbynm.com') && c.email !== 'info@theloft.lk' ? c.email : '',
               position_title: posTitle,
               position_id: 'pos-general',
               age: ageMatch ? ageMatch[1] : '',
@@ -647,7 +647,7 @@ export const createVipWaitlist = async (entry: any) => {
     await supabase.from('contacts').insert([{
       name: payload.name,
       phone: isEmail ? '' : payload.contact_value,
-      email: isEmail ? payload.contact_value : 'whatsapp-guest@theloftbynm.com',
+      email: isEmail ? payload.contact_value : 'info@theloft.lk',
       subject: `VIP ${payload.interest === 'menu' ? 'Menu' : 'Services'} Waitlist`,
       message: `Pre-launch waitlist registration. Contact: ${payload.contact_value}. Interest: ${payload.interest}`,
       status: 'unread'
@@ -730,6 +730,70 @@ export const setSalonLaunchMode = async (mode: 'pre-launch' | 'live') => {
     } catch (err) {
       console.warn('site_settings table not set up yet in Supabase:', err);
     }
+  }
+};
+
+// --- TESTIMONIALS VISIBILITY CONTROLLER ---
+const TESTIMONIALS_VISIBILITY_KEY = 'the_loft_testimonials_visibility';
+
+export const getTestimonialsVisibility = (): boolean => {
+  try {
+    const saved = localStorage.getItem(TESTIMONIALS_VISIBILITY_KEY);
+    if (saved === 'visible' || saved === 'true') {
+      return true;
+    }
+    if (saved === 'hidden' || saved === 'false') {
+      return false;
+    }
+  } catch (e) {}
+  // Default is hidden per requirements
+  return false;
+};
+
+export const setTestimonialsVisibility = async (visible: boolean) => {
+  const valueStr = visible ? 'visible' : 'hidden';
+  try {
+    localStorage.setItem(TESTIMONIALS_VISIBILITY_KEY, valueStr);
+    window.dispatchEvent(new CustomEvent('the-loft-testimonials-visibility-changed', { detail: visible }));
+  } catch (e) {}
+
+  if (checkConfig()) {
+    try {
+      await supabase
+        .from('site_settings')
+        .upsert([{ key: 'testimonials_visibility', value: valueStr, updated_at: new Date().toISOString() }], { onConflict: 'key' });
+    } catch (err) {
+      console.warn('site_settings table not set up yet in Supabase:', err);
+    }
+  }
+};
+
+// --- SYNC REMOTE SITE SETTINGS ---
+export const syncRemoteSiteSettings = async () => {
+  if (!checkConfig()) return;
+  try {
+    const { data, error } = await supabase.from('site_settings').select('key, value');
+    if (!error && Array.isArray(data)) {
+      for (const item of data) {
+        if (item.key === 'launch_mode' && (item.value === 'pre-launch' || item.value === 'live')) {
+          const current = localStorage.getItem(LAUNCH_MODE_STORAGE_KEY);
+          if (current !== item.value) {
+            localStorage.setItem(LAUNCH_MODE_STORAGE_KEY, item.value);
+            window.dispatchEvent(new CustomEvent('the-loft-launch-mode-changed', { detail: item.value }));
+          }
+        }
+        if (item.key === 'testimonials_visibility') {
+          const isVisible = item.value === 'visible' || item.value === 'true';
+          const current = localStorage.getItem(TESTIMONIALS_VISIBILITY_KEY);
+          if (current !== item.value) {
+            localStorage.setItem(TESTIMONIALS_VISIBILITY_KEY, item.value);
+            window.dispatchEvent(new CustomEvent('the-loft-testimonials-visibility-changed', { detail: isVisible }));
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Fail gracefully if table not created
   }
 };
 

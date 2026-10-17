@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { IMAGES } from '../data';
 import Testimonials from './Testimonials';
+import { getTestimonialsVisibility } from '../api';
 import { motion } from 'motion/react';
 import {
   ArrowRight,
@@ -24,6 +25,16 @@ interface HomeViewProps {
 }
 
 export default function HomeView({ setCurrentPage, onBookClick }: HomeViewProps) {
+  const [showTestimonials, setShowTestimonials] = useState<boolean>(getTestimonialsVisibility);
+
+  useEffect(() => {
+    const handleToggle = (e: any) => {
+      setShowTestimonials(Boolean(e.detail));
+    };
+    window.addEventListener('the-loft-testimonials-visibility-changed', handleToggle);
+    return () => window.removeEventListener('the-loft-testimonials-visibility-changed', handleToggle);
+  }, []);
+
   // Navigation helper that scrolls smoothly to top
   const navigateTo = (view: string) => {
     setCurrentPage(view);
@@ -696,66 +707,64 @@ export default function HomeView({ setCurrentPage, onBookClick }: HomeViewProps)
 
 
       {/* 6. WHAT TO EXPECT (TESTIMONIALS & COMMITMENTS) */}
-      <section
-        id="what-to-expect-section"
-        className="py-24 sm:py-32 bg-ivory border-t border-charcoal/5"
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
+      {showTestimonials && (
+        <section
+          id="what-to-expect-section"
+          className="py-24 sm:py-32 bg-ivory border-t border-charcoal/5"
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
 
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center max-w-2xl mx-auto space-y-4"
-          >
-            <span className="text-xs font-semibold tracking-[0.35em] uppercase text-gold block">
-              Guest Experiences
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-charcoal tracking-tight">
-              Verified Client Testimonials
-            </h2>
-            <div className="w-16 h-[1px] bg-gold mx-auto my-4" />
-            <p className="font-sans text-sm sm:text-base text-charcoal/70 font-normal leading-relaxed">
-              We prioritize absolute perfection and unhurried care. Read what our distinguished guests say about their luxurious treatments at The Loft.
-            </p>
-          </motion.div>
+            {/* Section Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="text-center max-w-2xl mx-auto space-y-4"
+            >
+              <span className="text-xs font-semibold tracking-[0.35em] uppercase text-gold block">
+                Guest Experiences
+              </span>
+              <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-charcoal tracking-tight">
+                Verified Client Testimonials
+              </h2>
+              <div className="w-16 h-[1px] bg-gold mx-auto my-4" />
+              <p className="font-sans text-sm sm:text-base text-charcoal/70 font-normal leading-relaxed">
+                We prioritize absolute perfection and unhurried care. Read what our distinguished guests say about their luxurious treatments at The Loft.
+              </p>
+            </motion.div>
 
-          {/* Testimonials Component */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-          >
-            <Testimonials />
-          </motion.div>
+            {/* Testimonials Component */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+            >
+              <Testimonials />
+            </motion.div>
 
-          {/* Commitments Divider & Section Header */}
-         
-         
+            {/* Beautiful placeholder signoff card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+              className="max-w-4xl mx-auto bg-white border border-gold/20 p-10 sm:p-16 rounded-[2rem] text-center space-y-6 shadow-xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-bl-[100px]" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-sage/10 rounded-tr-[100px]" />
+              <p className="font-serif text-2xl sm:text-3xl text-charcoal italic relative z-10 leading-relaxed">
+                "We measure our success by the absolute quietude and serene satisfaction of our guests."
+              </p>
+              <p className="font-sans text-xs tracking-widest uppercase font-bold text-gold relative z-10">
+                The Loft by NM Executive Suite
+              </p>
+            </motion.div>
 
-          {/* Beautiful placeholder signoff card */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-            className="max-w-4xl mx-auto bg-white border border-gold/20 p-10 sm:p-16 rounded-[2rem] text-center space-y-6 shadow-xl relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-bl-[100px]" />
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-sage/10 rounded-tr-[100px]" />
-            <p className="font-serif text-2xl sm:text-3xl text-charcoal italic relative z-10 leading-relaxed">
-              "We measure our success by the absolute quietude and serene satisfaction of our guests."
-            </p>
-            <p className="font-sans text-xs tracking-widest uppercase font-bold text-gold relative z-10">
-              The Loft by NM Executive Suite
-            </p>
-          </motion.div>
-
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
 
 

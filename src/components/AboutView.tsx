@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { IMAGES } from '../data';
 import Testimonials from './Testimonials';
+import { getTestimonialsVisibility } from '../api';
 import {
   Sparkle,
   Sparkles,
@@ -22,6 +23,15 @@ interface AboutViewProps {
 }
 
 export default function AboutView({ setCurrentPage, onBookClick }: AboutViewProps) {
+  const [showTestimonials, setShowTestimonials] = useState<boolean>(getTestimonialsVisibility);
+
+  useEffect(() => {
+    const handleToggle = (e: any) => {
+      setShowTestimonials(Boolean(e.detail));
+    };
+    window.addEventListener('the-loft-testimonials-visibility-changed', handleToggle);
+    return () => window.removeEventListener('the-loft-testimonials-visibility-changed', handleToggle);
+  }, []);
 
   // Navigation helper that scrolls smoothly to top
   const handleNavigate = (view: string) => {
@@ -488,31 +498,33 @@ export default function AboutView({ setCurrentPage, onBookClick }: AboutViewProp
       </section>
 
       {/* 6. TESTIMONIALS SECTION (DYNAMICAL COMPONENT) */}
-      <section
-        id="about-testimonials-section"
-        className="py-24 sm:py-32 bg-ivory border-t border-charcoal/5 relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-gold/5 to-transparent -z-10" />
+      {showTestimonials && (
+        <section
+          id="about-testimonials-section"
+          className="py-24 sm:py-32 bg-ivory border-t border-charcoal/5 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-gold/5 to-transparent -z-10" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 sm:space-y-20">
-          {/* Section Header */}
-          <div className="text-center max-w-2xl mx-auto space-y-4">
-            <span className="text-xs font-bold tracking-[0.4em] uppercase text-gold block">
-              Guest Experiences
-            </span>
-            <h2 className="font-serif text-4xl sm:text-5xl tracking-tight text-charcoal">
-              Honest Client Chronicles
-            </h2>
-            <div className="w-16 h-[2px] bg-gold/50 mx-auto my-6" />
-            <p className="font-sans text-sm sm:text-base text-charcoal/70 font-light leading-relaxed">
-              Real opinions, unprompted satisfaction, and verified accounts of our curated beauty sessions.
-            </p>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16 sm:space-y-20">
+            {/* Section Header */}
+            <div className="text-center max-w-2xl mx-auto space-y-4">
+              <span className="text-xs font-bold tracking-[0.4em] uppercase text-gold block">
+                Guest Experiences
+              </span>
+              <h2 className="font-serif text-4xl sm:text-5xl tracking-tight text-charcoal">
+                Honest Client Chronicles
+              </h2>
+              <div className="w-16 h-[2px] bg-gold/50 mx-auto my-6" />
+              <p className="font-sans text-sm sm:text-base text-charcoal/70 font-light leading-relaxed">
+                Real opinions, unprompted satisfaction, and verified accounts of our curated beauty sessions.
+              </p>
+            </div>
+
+            <Testimonials />
+
           </div>
-
-          <Testimonials />
-
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* COMMITMENTS SECTION */}
       <section className="py-20 sm:py-32 bg-ivory/50 border-t border-charcoal/5">
